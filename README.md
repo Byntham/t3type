@@ -18,7 +18,9 @@ npm test         # Playwright play test
 - While an agent works, switch to another thread: Tab jumps to the next thread waiting on you,
   Shift+Tab goes back, and Ctrl+Shift+] / Ctrl+Shift+[ (Cmd on macOS) step through the sidebar
   like T3 Code's thread.next and thread.previous.
-- A session ends when every thread is done or after 4 minutes.
+- Every prompt is its own WPM test, timed from its first key to Enter. Time spent in other
+  threads does not count. Each sent message shows its WPM and accuracy.
+- A session ends when every thread is done.
 
 ## Content
 
@@ -26,8 +28,8 @@ Threads come from `content/research/t3-threads.json`, imported unchanged by
 `src/content/prompts.ts`. Prompts marked `real` are verbatim and link to their
 post. Everything else is parody and labeled as such.
 
-URL options for testing: `?speed=4` runs the game clock 4x, `?duration=60` sets
-the session length in seconds, `?theme=light` or `?theme=dark` forces a theme.
+URL options for testing: `?speed=4` runs the agents 4x faster, `?seed=N` replays
+the same thread draw, `?theme=light` or `?theme=dark` forces a theme.
 
 See THIRD_PARTY.md for the T3 Code MIT notice.
 

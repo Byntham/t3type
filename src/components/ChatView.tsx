@@ -4,7 +4,6 @@ import { PanelBottomIcon, PanelRightIcon, SquareMenuIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { personOf } from "~/content/prompts";
 import { activeThread, computeStats, isWorking, type GameState } from "~/game/store";
-import { formatClock } from "~/lib/time";
 import { cn } from "~/lib/utils";
 import { ChatComposer } from "./chat/ChatComposer";
 import { MessagesTimeline } from "./chat/MessagesTimeline";
@@ -44,19 +43,28 @@ function LiveStats({ game }: { game: GameState }) {
           {working} running
         </span>
       ) : null}
-      <span title="Words per minute">
-        <span className="text-foreground/80" data-stat="wpm">
-          {stats.wpm}
+      <span title="This prompt while you type, else the last prompt sent here">
+        <span className="text-foreground/80" data-stat="live-wpm">
+          {stats.liveWpm ?? "-"}
         </span>{" "}
         wpm
+      </span>
+      <span title="Average over every prompt you sent">
+        avg{" "}
+        <span className="text-foreground/80" data-stat="wpm">
+          {stats.promptsSent > 0 ? stats.wpm : "-"}
+        </span>
+      </span>
+      <span title="Fastest prompt">
+        best{" "}
+        <span className="text-foreground/80" data-stat="best-wpm">
+          {stats.promptsSent > 0 ? stats.bestWpm : "-"}
+        </span>
       </span>
       <span title="Accuracy">
         <span className="text-foreground/80" data-stat="accuracy">
           {Math.round(stats.accuracy * 100)}%
         </span>
-      </span>
-      <span title="Time left" data-stat="time">
-        {formatClock(game.session.status === "ended" ? 0 : stats.remainingMs)}
       </span>
     </div>
   );

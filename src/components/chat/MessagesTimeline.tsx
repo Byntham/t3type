@@ -125,7 +125,12 @@ function UserMessageRow({ turn, thread }: { turn: Turn; thread: ThreadState }) {
           </p>
         </div>
       </div>
-      <PromptSource turn={turn} thread={thread} />
+      <div className="flex max-w-[80%] flex-wrap items-baseline justify-end gap-x-2">
+        <PromptSource turn={turn} thread={thread} />
+        <p className="me-1 text-2xs tabular-nums text-muted-foreground" data-prompt-result>
+          <span className="text-foreground/80">{turn.result.wpm} wpm</span> · {Math.round(turn.result.accuracy * 100)}%
+        </p>
+      </div>
       <div className="flex w-full max-w-[80%] items-center justify-end pe-1 text-xs tabular-nums opacity-0 transition-opacity duration-200 group-hover:opacity-100">
         <p className="text-muted-foreground text-xs tabular-nums">{formatTimeOfDay(turn.startedAt)}</p>
       </div>

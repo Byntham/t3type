@@ -4,8 +4,18 @@ import { useSyncExternalStore } from "react";
 import { drawThreads, type PromptDef, type ThreadDef } from "~/content/prompts";
 import { buildReply, diffPrompt, type AgentReply, type PromptDiff } from "./typos";
 
+/** One prompt's typing test: first keystroke to Enter, real time. */
+export interface PromptResult {
+  wpm: number;
+  accuracy: number;
+  ms: number;
+  /** Characters typed that match the target at the same position. */
+  correctChars: number;
+}
+
 export interface Turn {
   id: string;
+  result: PromptResult;
   promptIndex: number;
   prompt: PromptDef;
   typed: string;
@@ -21,6 +31,12 @@ export interface ThreadState {
   def: ThreadDef;
   turns: Turn[];
   draft: string;
+  /** Real ms spent typing the current draft. Time in other threads does not count. */
+  draftMs: number;
+  /** Real time of the last key in this draft, or null when the clock is paused. */
+  draftLastKeyAt: number | null;
+  draftKeys: number;
+  draftCorrectKeys: number;
   /** A finished turn the player has not looked at yet. T3 Code shows "Done". */
   unread: boolean;
   /** Game clock, ms. Drives the sidebar's relative time. */
@@ -33,13 +49,9 @@ export interface Session {
   status: "ready" | "playing" | "ended";
   startedAt: number | null;
   endedAt: number | null;
-  endReason: "time" | "done" | null;
-  durationMs: number;
+  endReason: "done" | null;
   keystrokes: number;
   correctKeystrokes: number;
-  /** Real ms spent typing. Gaps over 1.5s count as 1.5s. */
-  typingMs: number;
-  lastKeyAt: number | null;
   promptsSent: number;
   typosLiteral: number;
   /** Integral of running agents over game time, in agent-ms. */
@@ -58,8 +70,6 @@ export interface GameState {
 const params = new URLSearchParams(typeof location === "undefined" ? "" : location.search);
 /** ?speed=10 runs the game clock 10x, for tests. */
 const SPEED = Math.max(0.1, Number(params.get("speed") ?? 1) || 1);
-/** ?duration=60 changes the session length in seconds. */
-const SESSION_MS = Math.max(10, Number(params.get("duration") ?? 240) || 240) * 1000;
 const DRAFT_SLACK = 24;
 /** Real ms a finished thread stays in place before it settles, so the final reply can be read. */
 const SETTLE_DELAY_MS = 1800;
@@ -81,6 +91,10 @@ function seededThreads(now: number, defs: ThreadDef[]): ThreadState[] {
     def,
     turns: [],
     draft: "",
+    draftMs: 0,
+    draftLastKeyAt: null,
+    draftKeys: 0,
+    draftCorrectKeys: 0,
     unread: false,
     updatedAt: now - (ages[index % ages.length] ?? 60) * 60_000,
     settledAt: null,
@@ -93,11 +107,8 @@ function freshSession(): Session {
     startedAt: null,
     endedAt: null,
     endReason: null,
-    durationMs: SESSION_MS,
     keystrokes: 0,
     correctKeystrokes: 0,
-    typingMs: 0,
-    lastKeyAt: null,
     promptsSent: 0,
     typosLiteral: 0,
     agentMs: 0,
@@ -165,33 +176,66 @@ export function activeThread(s: GameState = state): ThreadState {
 }
 
 export interface Stats {
+  /** Average over sent prompts, weighted by length. */
   wpm: number;
+  /** The open thread's draft while typing, else its last sent prompt. Null before either. */
+  liveWpm: number | null;
+  bestWpm: number;
+  best: { wpm: number; text: string; thread: string } | null;
   accuracy: number;
   promptsSent: number;
   typosLiteral: number;
   parallelism: number;
   peakAgents: number;
   elapsedMs: number;
-  remainingMs: number;
   threadsDone: number;
+}
+
+const MIN_TEST_MS = 400;
+
+export function wpmOf(correctChars: number, ms: number): number {
+  return correctChars / 5 / (Math.max(ms, MIN_TEST_MS) / 60_000);
+}
+
+/** Characters in `typed` that match `target` at the same position. */
+export function correctCharsOf(typed: string, target: string): number {
+  let n = 0;
+  for (let i = 0; i < typed.length && i < target.length; i++) if (typed[i] === target[i]) n++;
+  return n;
 }
 
 export function computeStats(s: GameState = state): Stats {
   const session = s.session;
-  const minutes = session.typingMs / 60_000;
-  const wpm = minutes > 0.02 ? session.correctKeystrokes / 5 / minutes : 0;
+  const turns = s.threads.flatMap((thread) => thread.turns.map((turn) => ({ turn, thread })));
+  const totalChars = turns.reduce((sum, { turn }) => sum + turn.result.correctChars, 0);
+  const totalMs = turns.reduce((sum, { turn }) => sum + turn.result.ms, 0);
+  const wpm = turns.length > 0 ? wpmOf(totalChars, totalMs) : 0;
+  let best: Stats["best"] = null;
+  for (const { turn, thread } of turns) {
+    if (!best || turn.result.wpm > best.wpm) best = { wpm: turn.result.wpm, text: turn.typed, thread: thread.def.title };
+  }
+  const open = activeThread(s);
+  const prompt = nextPrompt(open);
+  let liveWpm: number | null = null;
+  if (open.draft.length > 0 && prompt && open.draftMs >= 1000) {
+    liveWpm = Math.round(wpmOf(correctCharsOf(open.draft, prompt.text), open.draftMs));
+  } else if (open.draft.length === 0 && open.turns.length > 0) {
+    liveWpm = open.turns.at(-1)!.result.wpm;
+  }
   const accuracy = session.keystrokes > 0 ? session.correctKeystrokes / session.keystrokes : 1;
   const end = session.endedAt ?? s.now;
   const elapsedMs = session.startedAt === null ? 0 : Math.max(0, end - session.startedAt);
   return {
     wpm: Math.round(wpm),
+    liveWpm,
+    bestWpm: best?.wpm ?? 0,
+    best,
     accuracy,
     promptsSent: session.promptsSent,
     typosLiteral: session.typosLiteral,
     parallelism: elapsedMs > 0 ? session.agentMs / elapsedMs : 0,
     peakAgents: session.peakAgents,
     elapsedMs,
-    remainingMs: session.durationMs - elapsedMs,
     threadsDone: s.threads.filter(isComplete).length,
   };
 }
@@ -224,12 +268,8 @@ function advance(s: GameState, now: number): GameState {
   });
   let next: GameState = { ...s, threads: changed ? threads : s.threads, session, now };
   next = autoSettle(next, now);
-  if (session.status === "playing" && session.startedAt !== null) {
-    if (now - session.startedAt >= session.durationMs) {
-      next = endSession(next, "time", session.startedAt + session.durationMs);
-    } else if (next.threads.every(isComplete)) {
-      next = endSession(next, "done", now);
-    }
+  if (session.status === "playing" && next.threads.every(isComplete)) {
+    next = endSession(next, "done", now);
   }
   return next;
 }
@@ -261,7 +301,7 @@ function autoSettle(s: GameState, now: number): GameState {
   return next;
 }
 
-function endSession(s: GameState, reason: "time" | "done", at: number): GameState {
+function endSession(s: GameState, reason: "done", at: number): GameState {
   return {
     ...s,
     session: { ...s.session, status: "ended", endReason: reason, endedAt: at, lastSampleAt: null },
@@ -276,6 +316,12 @@ if (typeof window !== "undefined") {
 
 function updateThread(s: GameState, id: string, fn: (thread: ThreadState) => ThreadState) {
   return { ...s, threads: s.threads.map((thread) => (thread.def.id === id ? fn(thread) : thread)) };
+}
+
+/** Adds the time since the last key in this draft. The first key starts the clock. */
+function tick(thread: ThreadState, real: number): ThreadState {
+  const gap = thread.draftLastKeyAt === null ? 0 : real - thread.draftLastKeyAt;
+  return { ...thread, draftMs: thread.draftMs + gap, draftLastKeyAt: real };
 }
 
 function canType(thread: ThreadState): boolean {
@@ -296,25 +342,27 @@ export function typeChar(ch: string) {
   const real = Date.now();
   let s = startIfReady(advance(state, now), now);
   const correct = target.text[thread.draft.length] === ch;
-  const gap = s.session.lastKeyAt === null ? 0 : Math.min(1500, real - s.session.lastKeyAt);
   s = {
     ...s,
     session: {
       ...s.session,
       keystrokes: s.session.keystrokes + 1,
       correctKeystrokes: s.session.correctKeystrokes + (correct ? 1 : 0),
-      typingMs: s.session.typingMs + gap,
-      lastKeyAt: real,
     },
   };
-  set(updateThread(s, thread.def.id, (t) => ({ ...t, draft: t.draft + ch })));
+  set(updateThread(s, thread.def.id, (t) => ({
+    ...tick(t, real),
+    draft: t.draft + ch,
+    draftKeys: t.draftKeys + 1,
+    draftCorrectKeys: t.draftCorrectKeys + (correct ? 1 : 0),
+  })));
 }
 
 export function backspace(word = false) {
   const thread = activeThread();
   if (!canType(thread) || thread.draft.length === 0) return;
   const draft = word ? thread.draft.replace(/\S+\s*$|\s+$/, "") : thread.draft.slice(0, -1);
-  set(updateThread(state, thread.def.id, (t) => ({ ...t, draft })));
+  set(updateThread(state, thread.def.id, (t) => ({ ...tick(t, Date.now()), draft })));
 }
 
 export function send() {
@@ -323,10 +371,19 @@ export function send() {
   if (!prompt || !canType(thread) || thread.draft.trim().length === 0) return;
   const now = clock();
   let s = startIfReady(advance(state, now), now);
+  const timed = tick(thread, Date.now());
+  const correctChars = correctCharsOf(thread.draft.trim(), prompt.text);
+  const result: PromptResult = {
+    wpm: Math.round(wpmOf(correctChars, timed.draftMs)),
+    accuracy: thread.draftKeys > 0 ? thread.draftCorrectKeys / thread.draftKeys : 1,
+    ms: Math.max(timed.draftMs, MIN_TEST_MS),
+    correctChars,
+  };
   const diff = diffPrompt(thread.draft, prompt.text);
   const reply = buildReply(prompt.reply, diff, thread.def.persona);
   const turn: Turn = {
     id: `${thread.def.id}:${thread.turns.length}`,
+    result,
     promptIndex: thread.turns.length,
     prompt,
     typed: thread.draft.trim(),
@@ -348,6 +405,10 @@ export function send() {
     ...t,
     turns: [...t.turns, turn],
     draft: "",
+    draftMs: 0,
+    draftLastKeyAt: null,
+    draftKeys: 0,
+    draftCorrectKeys: 0,
     updatedAt: now,
   }));
   const running = runningCount(s.threads);
@@ -356,7 +417,9 @@ export function send() {
 }
 
 function withSelected(s: GameState, id: string): GameState {
-  return updateThread({ ...s, activeId: id }, id, (t) => ({ ...t, unread: false }));
+  // Leaving a thread pauses its draft clock, so time away never counts.
+  const paused = { ...s, threads: s.threads.map((t) => (t.draftLastKeyAt === null ? t : { ...t, draftLastKeyAt: null })) };
+  return updateThread({ ...paused, activeId: id }, id, (t) => ({ ...t, unread: false }));
 }
 
 export function selectThread(id: string) {

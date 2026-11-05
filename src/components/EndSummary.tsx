@@ -19,7 +19,8 @@ export function EndSummary({ game }: { game: GameState }) {
     .slice(0, 8);
   const rows = [
     { label: "Prompts sent", value: String(stats.promptsSent), key: "prompts" },
-    { label: "Speed", value: `${stats.wpm} wpm`, key: "wpm" },
+    { label: "Average speed", value: `${stats.wpm} wpm`, key: "wpm" },
+    { label: "Fastest prompt", value: stats.best ? `${stats.best.wpm} wpm in ${stats.best.thread}` : "-", key: "best" },
     { label: "Accuracy", value: `${Math.round(stats.accuracy * 100)}%`, key: "accuracy" },
     { label: "Typos taken literally", value: String(stats.typosLiteral), key: "typos" },
     {
@@ -35,8 +36,7 @@ export function EndSummary({ game }: { game: GameState }) {
       <div className="pb-1.5">
         <div className="border-b border-border/60 pb-2 pe-0.5 pt-1">
           <div className="flex items-center gap-1 px-1 text-sm leading-relaxed text-muted-foreground tabular-nums">
-            {game.session.endReason === "time" ? "Time is up after" : "All threads done in"}{" "}
-            {formatDuration(stats.elapsedMs)}
+            All threads done in {formatDuration(stats.elapsedMs)}
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ export function EndSummary({ game }: { game: GameState }) {
               <KeyboardIcon className="size-3.5" /> Enter plays again
             </span>
             <span className="inline-flex items-center gap-1">
-              <ClockIcon className="size-3.5" /> Sessions last {formatDuration(game.session.durationMs)}
+              <ClockIcon className="size-3.5" /> Each prompt is timed from its first key to Enter
             </span>
           </p>
         </div>

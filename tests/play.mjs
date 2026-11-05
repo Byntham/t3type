@@ -5,7 +5,7 @@
 //
 // Run 1 (dark): types every prompt, with typos in some, switches threads with
 // Tab while agents run, and plays until all threads are done.
-// Run 2 (light): a short timed session that ends when the clock runs out.
+// Run 2 (light): per-prompt WPM tests, time away from a thread does not count.
 // Both runs fail on any console error. Screenshots go to tests/shots/.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -137,7 +137,7 @@ try {
     const quotesTypo = literal.every((turn) => turn.diff.typos.length === 0 || turn.reply.text.includes(turn.diff.typos[0].typed));
     check(literal.length > 0 && quotesTypo, `${literal.length} literal replies quote the typo as typed`);
     const summary = await page.locator("[data-summary]").allTextContents();
-    check(summary.length === 6, `end screen shows ${summary.length} stat rows`);
+    check(summary.length === 7, `end screen shows ${summary.length} stat rows`);
     check(errors.length === 0, `no console errors in dark run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
 
     // The timeline shows a real prompt's source and the parody label.
@@ -175,16 +175,31 @@ try {
     await page.close();
   }
 
-  // Run 2: light, short timed session that ends on the clock.
+  // Run 2: light. Each prompt is its own WPM test: check the measured speed,
+  // that time spent in another thread does not count, and that nothing ends on a clock.
   {
-    const { page, errors } = await openPage(browser, "light", "speed=4&duration=40");
+    const { page, errors } = await openPage(browser, "light", "speed=4");
     const s0 = await state(page);
+    const firstId = s0.activeId;
     const first = activeOf(s0).def.prompts[0].text;
-    await page.keyboard.type(withTypo(first));
-    await page.keyboard.press("Enter");
+    // About 120 wpm: 100ms per key. Half the prompt, a 3s trip to another thread, then the rest.
+    const half = Math.floor(first.length / 2);
+    await page.keyboard.type(first.slice(0, half), { delay: 100 });
     await page.keyboard.press("Tab");
+    check((await state(page)).activeId !== firstId, "Tab leaves the thread mid-prompt");
+    await page.waitForTimeout(3000);
+    await page.evaluate((id) => window.__game.select(id), firstId);
+    await page.keyboard.type(first.slice(half), { delay: 100 });
+    await page.keyboard.press("Enter");
     const s1 = await state(page);
-    const second = activeOf(s1).def.prompts[0].text;
+    const result = s1.threads.find((t) => t.def.id === firstId).turns[0].result;
+    check(result.wpm >= 90 && result.wpm <= 160, `per-prompt wpm ignores time away (${result.wpm} wpm, expected about 120)`);
+    check(result.accuracy === 1, `per-prompt accuracy is 100% for a clean prompt (${result.accuracy})`);
+    const shown = await page.locator("[data-prompt-result]").first().textContent();
+    check(shown?.includes(`${result.wpm} wpm`), `user message shows its result ("${shown?.trim()}")`);
+    await page.keyboard.press("Tab");
+    const s2 = await state(page);
+    const second = activeOf(s2).def.prompts[0].text;
     await page.keyboard.type(second.slice(0, 30));
     await page.waitForTimeout(300);
     await page.screenshot({ path: join(shots, "light-running.png") });
@@ -193,21 +208,19 @@ try {
     // Back to the first thread once its agent is done, and check the reply.
     await page.waitForFunction(
       (id) => window.__game.state().threads.find((t) => t.def.id === id).turns[0]?.done === true,
-      s0.activeId,
+      firstId,
       { timeout: 20000 },
     );
-    await page.evaluate((id) => window.__game.select(id), s0.activeId);
+    await page.evaluate((id) => window.__game.select(id), firstId);
     await page.waitForSelector("[data-assistant-message]");
     await page.screenshot({ path: join(shots, "light-reply.png") });
     const sources = await page.locator("[data-prompt-kind]").count();
     check(sources > 0, "prompt kind label shows under the user message");
     check((await page.locator("[data-parody-label]").count()) === 1, "parody label shows in the header");
-    await page.waitForFunction(() => window.__game.state().session.status === "ended", null, { timeout: 30000 });
-    await page.waitForSelector("[data-end-summary]");
-    await page.screenshot({ path: join(shots, "light-end.png") });
-    const end = await state(page);
-    check(end.session.endReason === "time", `light run ends on the clock (got ${end.session.endReason})`);
-    check(end.stats.promptsSent === 2, `light run sent 2 prompts (got ${end.stats.promptsSent})`);
+    await page.waitForTimeout(4000);
+    const later = await state(page);
+    check(later.session.status === "playing", `no session clock: still playing after idling (${later.session.status})`);
+    check(later.stats.promptsSent === 2 && later.stats.bestWpm >= result.wpm, `stats track 2 prompts, best ${later.stats.bestWpm} wpm`);
     check(errors.length === 0, `no console errors in light run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
     await page.close();
   }
