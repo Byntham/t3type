@@ -1,6 +1,6 @@
 <img src="assets/icon.svg" width="64" height="64" alt="">
 
-# swetype
+# t3type
 
 A typing game that looks like T3 Code. You type prompts to coding agents as
 Theo, Julius and Maria. The agents take every typo literally.
