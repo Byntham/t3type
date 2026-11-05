@@ -58,11 +58,16 @@ function cssCommentOffsets(text) {
 
 function htmlCommentOffsets(fileName, text) {
   const offsets = [];
-  for (const match of text.matchAll(/<!--/g)) offsets.push(match.index);
-  for (const match of text.matchAll(/(<script\b[^>]*>)([\s\S]*?)<\/script>/gi)) {
+  let markup = text;
+  for (const match of text.matchAll(/(<(script|style)\b[^>]*>)([\s\S]*?)<\/\2>/gi)) {
     const bodyStart = match.index + match[1].length;
-    for (const offset of scriptCommentOffsets(`${fileName}.js`, match[2])) offsets.push(bodyStart + offset);
+    const body = match[3];
+    const bodyOffsets =
+      match[2].toLowerCase() === "style" ? cssCommentOffsets(body) : scriptCommentOffsets(`${fileName}.js`, body);
+    for (const offset of bodyOffsets) offsets.push(bodyStart + offset);
+    markup = markup.slice(0, bodyStart) + " ".repeat(body.length) + markup.slice(bodyStart + body.length);
   }
+  for (const match of markup.matchAll(/<!--/g)) offsets.push(match.index);
   return offsets;
 }
 

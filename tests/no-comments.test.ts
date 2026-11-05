@@ -32,6 +32,14 @@ describe("findComments", () => {
     expect(findComments("x.html", source)).toEqual([1, 3]);
   });
 
+  it("flags comments in inline styles", () => {
+    expect(findComments("x.html", ["<style>", "  /* note */", "</style>"].join("\n"))).toEqual([2]);
+  });
+
+  it("ignores an HTML comment marker inside an inline script string", () => {
+    expect(findComments("x.html", '<script>const x = "<!--";</script>')).toEqual([]);
+  });
+
   it("skips files it does not lint", () => {
     expect(findComments("x.json", '{ "a": "// b" }')).toEqual([]);
     expect(findComments("README.md", "<!-- note -->")).toEqual([]);
