@@ -25,6 +25,8 @@ export interface ThreadState {
   unread: boolean;
   /** Game clock, ms. Drives the sidebar's relative time. */
   updatedAt: number;
+  /** Game clock, ms. Set when a finished thread moves to the Settled shelf. */
+  settledAt: number | null;
 }
 
 export interface Session {
@@ -59,6 +61,8 @@ const SPEED = Math.max(0.1, Number(params.get("speed") ?? 1) || 1);
 /** ?duration=60 changes the session length in seconds. */
 const SESSION_MS = Math.max(10, Number(params.get("duration") ?? 240) || 240) * 1000;
 const DRAFT_SLACK = 24;
+/** Real ms a finished thread stays in place before it settles, so the final reply can be read. */
+const SETTLE_DELAY_MS = 1800;
 
 const realStart = Date.now();
 const clock = () => realStart + (Date.now() - realStart) * SPEED;
@@ -72,6 +76,7 @@ function seededThreads(now: number): ThreadState[] {
     draft: "",
     unread: false,
     updatedAt: now - (ages[index % ages.length] ?? 60) * 60_000,
+    settledAt: null,
   }));
 }
 
@@ -137,6 +142,10 @@ export function isComplete(thread: ThreadState): boolean {
 
 export function awaitingInput(thread: ThreadState): boolean {
   return !isWorking(thread) && nextPrompt(thread) !== null;
+}
+
+export function isSettled(thread: ThreadState): boolean {
+  return thread.settledAt !== null;
 }
 
 export function runningCount(threads: ThreadState[]): number {
@@ -206,12 +215,40 @@ function advance(s: GameState, now: number): GameState {
     };
   });
   let next: GameState = { ...s, threads: changed ? threads : s.threads, session, now };
+  next = autoSettle(next, now);
   if (session.status === "playing" && session.startedAt !== null) {
     if (now - session.startedAt >= session.durationMs) {
       next = endSession(next, "time", session.startedAt + session.durationMs);
     } else if (next.threads.every(isComplete)) {
       next = endSession(next, "done", now);
     }
+  }
+  return next;
+}
+
+/**
+ * Auto-settle, like T3 Code's settleAndAdvance: a thread with no prompts left
+ * moves to the Settled shelf once its last reply has been up for a moment.
+ * If it was the open thread, navigation moves forward to the next one.
+ */
+function autoSettle(s: GameState, now: number): GameState {
+  const delay = SETTLE_DELAY_MS * SPEED;
+  const ready = s.threads.filter((thread) => {
+    if (isSettled(thread) || !isComplete(thread)) return false;
+    const last = thread.turns.at(-1);
+    return last !== undefined && now >= last.startedAt + last.durationMs + delay;
+  });
+  if (ready.length === 0) return s;
+  const readyIds = new Set(ready.map((thread) => thread.def.id));
+  let next: GameState = {
+    ...s,
+    threads: s.threads.map((thread) =>
+      readyIds.has(thread.def.id) ? { ...thread, settledAt: now, unread: false } : thread,
+    ),
+  };
+  if (readyIds.has(s.activeId)) {
+    const target = forwardTarget(next);
+    if (target) next = withSelected(next, target);
   }
   return next;
 }
@@ -310,16 +347,39 @@ export function send() {
   set(s);
 }
 
-export function selectThread(id: string) {
-  if (!state.threads.some((thread) => thread.def.id === id)) return;
-  set(updateThread({ ...state, activeId: id }, id, (t) => ({ ...t, unread: false })));
+function withSelected(s: GameState, id: string): GameState {
+  return updateThread({ ...s, activeId: id }, id, (t) => ({ ...t, unread: false }));
 }
 
-function orderedIds(): string[] {
-  // Sidebar order: projects by first appearance, threads in file order.
-  const projects = [...new Set(state.threads.map((t) => t.def.project))];
+export function selectThread(id: string) {
+  if (!state.threads.some((thread) => thread.def.id === id)) return;
+  set(withSelected(state, id));
+}
+
+/** Sidebar order, without settled threads: projects by first appearance, threads in file order. */
+function orderedIds(s: GameState = state): string[] {
+  const open = s.threads.filter((t) => !isSettled(t) || t.def.id === s.activeId);
+  const projects = [...new Set(open.map((t) => t.def.project))];
   return projects.flatMap((project) =>
-    state.threads.filter((t) => t.def.project === project).map((t) => t.def.id),
+    open.filter((t) => t.def.project === project).map((t) => t.def.id),
+  );
+}
+
+/**
+ * The thread to move to from the active one: the next thread waiting on the
+ * player (unread first), else the next running one. Null if there is none.
+ */
+function forwardTarget(s: GameState): string | null {
+  const ids = orderedIds(s);
+  const start = ids.indexOf(s.activeId);
+  const rotated = [...ids.slice(start + 1), ...ids.slice(0, start + 1)].filter((id) => id !== s.activeId);
+  const byId = new Map(s.threads.map((t) => [t.def.id, t]));
+  const waiting = rotated.filter((id) => awaitingInput(byId.get(id)!));
+  return (
+    waiting.find((id) => byId.get(id)!.unread) ??
+    waiting[0] ??
+    rotated.find((id) => isWorking(byId.get(id)!)) ??
+    null
   );
 }
 
@@ -330,14 +390,9 @@ export function cycleThread(direction: 1 | -1) {
   selectThread(ids[(index + direction + ids.length) % ids.length]!);
 }
 
-/** Tab: the next thread waiting on the player, unread ones first. */
+/** Tab: the next thread waiting on the player, unread first, else a running one. */
 export function nextWaitingThread() {
-  const ids = orderedIds();
-  const start = ids.indexOf(state.activeId);
-  const rotated = [...ids.slice(start + 1), ...ids.slice(0, start + 1)];
-  const byId = new Map(state.threads.map((t) => [t.def.id, t]));
-  const waiting = rotated.filter((id) => id !== state.activeId && awaitingInput(byId.get(id)!));
-  const pick = waiting.find((id) => byId.get(id)!.unread) ?? waiting[0];
+  const pick = forwardTarget(state);
   if (pick) selectThread(pick);
 }
 

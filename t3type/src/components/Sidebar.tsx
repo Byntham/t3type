@@ -18,6 +18,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { projectOrder, threadBranch, threadProvider } from "~/content/prompts";
 import {
   awaitingInput,
+  isSettled,
   isWorking,
   selectThread,
   type GameState,
@@ -257,8 +258,11 @@ export function ThreadSidebar({ game }: { game: GameState }) {
   const ordered = projectOrder(game.threads.map((t) => t.def)).flatMap((project) =>
     game.threads.filter((t) => t.def.project === project),
   );
-  const active = ordered.filter((t) => !isWorking(t));
-  const workingThreads = ordered.filter(isWorking);
+  // Settled threads leave the list, except the open one while navigation moves on.
+  const visible = ordered.filter((t) => !isSettled(t) || t.def.id === game.activeId);
+  const active = visible.filter((t) => !isWorking(t));
+  const workingThreads = visible.filter(isWorking);
+  const settledCount = ordered.filter(isSettled).length;
   return (
     <>
       <div className="relative flex h-[var(--workspace-topbar-height)] shrink-0 flex-row items-center gap-2 pr-3">
@@ -310,7 +314,7 @@ export function ThreadSidebar({ game }: { game: GameState }) {
               ))}
               <SectionHeader
                 label="Settled"
-                count={0}
+                count={settledCount}
                 className={cn(workingThreads.length === 0 && "mt-auto")}
                 testId="sidebar-settled-header"
               />

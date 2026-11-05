@@ -147,6 +147,34 @@ try {
     await page.close();
   }
 
+  // Run 3: auto-settle. Finish one thread without pressing Tab. It should move
+  // to the Settled shelf and navigation should move forward on its own.
+  {
+    const { page, errors } = await openPage(browser, "dark", "speed=4");
+    const s0 = await state(page);
+    const first = activeOf(s0);
+    for (const prompt of first.def.prompts) {
+      await page.waitForFunction((id) => {
+        const t = window.__game.state().threads.find((x) => x.def.id === id);
+        return t.turns.length === 0 || t.turns.at(-1).done;
+      }, first.def.id);
+      await page.keyboard.type(prompt.text);
+      await page.keyboard.press("Enter");
+    }
+    await page.waitForFunction((id) => window.__game.state().activeId !== id, first.def.id, { timeout: 15_000 });
+    const s1 = await state(page);
+    const settled = s1.threads.find((t) => t.def.id === first.def.id);
+    check(settled.settledAt !== null, "finished thread auto-settles");
+    check(s1.activeId !== first.def.id, `navigation moved forward on its own (to ${s1.activeId})`);
+    const header = await page.locator('[data-testid="sidebar-settled-header"]').textContent();
+    check(/1/.test(header ?? ""), `Settled shelf shows 1 (got "${header?.trim()}")`);
+    await page.keyboard.press("Tab");
+    check((await state(page)).activeId !== first.def.id, "Tab never returns to a settled thread");
+    await page.screenshot({ path: join(shots, "dark-settled.png") });
+    check(errors.length === 0, `no console errors in settle run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
+    await page.close();
+  }
+
   // Run 2: light, short timed session that ends on the clock.
   {
     const { page, errors } = await openPage(browser, "light", "speed=4&duration=40");

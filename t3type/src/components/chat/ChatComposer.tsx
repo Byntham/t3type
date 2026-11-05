@@ -198,7 +198,7 @@ export function ChatComposer({ game, thread }: { game: GameState; thread: Thread
       ? "The agent is working. Press Tab to switch to a thread that needs you."
       : prompt
         ? prompt.text
-        : "This thread is done. Press Tab for the next one.";
+        : "Thread finished. Settling it and moving to the next one.";
   return (
     <Shell>
       <Host>
