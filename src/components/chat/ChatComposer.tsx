@@ -85,7 +85,7 @@ function GhostEditor({
         data-testid="composer-editor"
         tabIndex={0}
         className={cn(
-          "composer-tiptap -m-1 block max-h-[8lh] min-h-[calc(2lh+--spacing(2))] overflow-y-auto p-1 whitespace-pre-wrap wrap-break-word bg-transparent leading-relaxed focus:outline-none",
+          "composer-tiptap -m-1 block [font-kerning:none] [font-variant-ligatures:none] max-h-[8lh] min-h-[calc(2lh+--spacing(2))] overflow-y-auto p-1 whitespace-pre-wrap wrap-break-word bg-transparent leading-relaxed focus:outline-none",
           complete ? "text-success-foreground" : "text-foreground",
         )}
       >
