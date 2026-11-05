@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { compactSidebarTimeLabel, formatRelativeElapsed } from "~/lib/time";
+import { clampComposerFont } from "~/lib/composerFont";
 import { cn } from "~/lib/utils";
 
 describe("compactSidebarTimeLabel", () => {
@@ -17,5 +18,14 @@ describe("cn", () => {
 
   it("still lets a later font size replace text-2xs", () => {
     expect(cn("text-2xs", "text-sm")).toBe("text-sm");
+  });
+});
+
+describe("clampComposerFont", () => {
+  it("keeps sizes inside 14 to 32 and falls back to 20 for junk", () => {
+    expect(clampComposerFont(8)).toBe(14);
+    expect(clampComposerFont(40)).toBe(32);
+    expect(clampComposerFont(22.4)).toBe(22);
+    expect(clampComposerFont(Number("abc"))).toBe(20);
   });
 });
