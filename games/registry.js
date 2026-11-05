@@ -1,0 +1,23 @@
+// One entry per game. The hub renders this list.
+export const GAMES = [
+  { slug: "flame-graph", title: "Flame Graph", idea: "Measure, don't guess.",
+    how: "Guess which word will slow you down, type the passage, then read your own flame graph and drill the real hot path." },
+  { slug: "slo-burn", title: "SLO Burn", idea: "Your p99 is the product.",
+    how: "Every gap between keys is a request. Gaps over the latency target burn your error budget. Type until the outage." },
+  { slug: "commit-often", title: "Small Commits", idea: "Commit early. Revert cheaply.",
+    how: "No backspace. A typo rolls you back to your last commit. Enter commits, but CI costs time." },
+  { slug: "on-call", title: "On-Call", idea: "Triage first. Then fix.",
+    how: "Incidents fall toward prod. Type the first letter to lock one, finish it to resolve. SEV1s fall fastest." },
+  { slug: "cache-miss", title: "Cache Miss", idea: "Keep the lesson in memory.",
+    how: "Read the passage, then type it from memory. Holding Tab peeks, and each peek is a cache miss." },
+  { slug: "context-switch", title: "Context Switch", idea: "Every interrupt has a warm-up cost.",
+    how: "Two tasks side by side. Pings move you between them. The game measures what each switch cost you." },
+  { slug: "steady-state", title: "Steady State", idea: "Sustainable pace beats sprints.",
+    how: "A rhythm game. Finish each word on the beat. Consistency scores higher than speed." },
+  { slug: "tech-debt", title: "Tech Debt", idea: "Debt compounds. Pay it early.",
+    how: "No backspace. Typos become debt that accrues interest and blurs the text ahead. Enter pays it down." },
+  { slug: "git-blame", title: "git blame", idea: "Who wrote this?",
+    how: "Type a quote with the author hidden. Guess the author early for more points." },
+  { slug: "code-review", title: "Code Review", idea: "Approve the right diff.",
+    how: "Two lines: a real lesson and its bad twin. Approve one by typing it." },
+];
