@@ -1,7 +1,13 @@
-import { FolderIcon, GitBranchIcon, PaperclipIcon } from "lucide-react";
+import { AArrowDownIcon, AArrowUpIcon, FolderIcon, GitBranchIcon, PaperclipIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { personOf, sourceAuthor, threadBranch, type PromptDef } from "~/content/prompts";
 import { isWorking, nextPrompt, type GameState, type ThreadState } from "~/game/store";
+import {
+  COMPOSER_FONT_MAX,
+  COMPOSER_FONT_MIN,
+  stepComposerFont,
+  useComposerFont,
+} from "~/lib/composerFont";
 import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { ComposerControl, ComposerPermissionsChip, ProviderModelPicker } from "./ComposerControls";
@@ -53,8 +59,13 @@ function Main({ className, ...props }: ComponentProps<"div">) {
 function GhostEditor({ draft, target, locked }: { draft: string; target: string; locked: boolean }) {
   const typed = Array.from(draft);
   const goal = Array.from(target);
+  const fontPx = useComposerFont();
   return (
-    <div className="relative flow-root font-sans text-sm" data-testid="composer-editor-root">
+    <div
+      className="relative flow-root font-sans"
+      style={{ fontSize: fontPx }}
+      data-testid="composer-editor-root"
+    >
       <div
         role="textbox"
         aria-multiline="true"
@@ -62,7 +73,7 @@ function GhostEditor({ draft, target, locked }: { draft: string; target: string;
         aria-placeholder={target}
         data-testid="composer-editor"
         tabIndex={0}
-        className="composer-tiptap -m-1 block max-h-52 min-h-[calc(2lh+--spacing(2))] overflow-y-auto p-1 whitespace-pre-wrap wrap-break-word bg-transparent leading-relaxed text-foreground focus:outline-none"
+        className="composer-tiptap -m-1 block max-h-[8lh] min-h-[calc(2lh+--spacing(2))] overflow-y-auto p-1 whitespace-pre-wrap wrap-break-word bg-transparent leading-relaxed text-foreground focus:outline-none"
       >
         {typed.map((ch, index) => {
           const ok = goal[index] === ch;
@@ -110,6 +121,38 @@ function PromptKindLabel({ thread, prompt }: { thread: ThreadState; prompt: Prom
     <span className="truncate text-xs text-muted-foreground/80" data-prompt-kind="parody">
       Parody of {person.name} ({person.handle})
     </span>
+  );
+}
+
+function FontSizeControl() {
+  const fontPx = useComposerFont();
+  return (
+    <div className="flex shrink-0 items-center" data-composer-font-size={fontPx}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Smaller prompt text"
+        title="Smaller prompt text"
+        tabIndex={-1}
+        disabled={fontPx <= COMPOSER_FONT_MIN}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => stepComposerFont(-1)}
+      >
+        <AArrowDownIcon />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Larger prompt text"
+        title="Larger prompt text"
+        tabIndex={-1}
+        disabled={fontPx >= COMPOSER_FONT_MAX}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => stepComposerFont(1)}
+      >
+        <AArrowUpIcon />
+      </Button>
+    </div>
   );
 }
 
@@ -237,6 +280,7 @@ export function ChatComposer({ game, thread }: { game: GameState; thread: Thread
                         data-chat-composer-controls="footer"
                         className="relative flex min-w-0 flex-1 items-center justify-end gap-0.5"
                       >
+                        <FontSizeControl />
                         <ProviderModelPicker thread={thread.def} />
                       </div>
                       {working ? <StopButton /> : <SendButton enabled={!locked && thread.draft.trim().length > 0} />}

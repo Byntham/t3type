@@ -205,11 +205,32 @@ async function checkPerPromptWpmInLight(browser) {
   await page.close();
 }
 
+async function checkComposerFontSize(browser) {
+  const { page, errors } = await openPage(browser, "dark", "speed=4");
+  const editorPx = () =>
+    page.locator('[data-testid="composer-editor"]').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  check((await editorPx()) === 20, `prompt text defaults to 20px (got ${await editorPx()})`);
+  await page.getByRole("button", { name: "Larger prompt text" }).click();
+  await page.getByRole("button", { name: "Larger prompt text" }).click();
+  check((await editorPx()) === 24, `two clicks on larger give 24px (got ${await editorPx()})`);
+  await page.keyboard.type("ab");
+  check(activeOf(await state(page)).draft === "ab", "typing still reaches the composer after clicking the size buttons");
+  await page.reload();
+  await page.waitForFunction(() => window.__game !== undefined);
+  check((await editorPx()) === 24, `size survives a reload (got ${await editorPx()})`);
+  await page.screenshot({ path: join(shots, "dark-font-24.png") });
+  for (let i = 0; i < 20; i += 1) await page.getByRole("button", { name: "Smaller prompt text" }).click({ force: true });
+  check((await editorPx()) === 14, `size stops at 14px (got ${await editorPx()})`);
+  check(errors.length === 0, `no console errors in font size run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
+  await page.close();
+}
+
 const browser = await chromium.launch();
 try {
   await playFullSessionInDark(browser);
   await checkAutoSettle(browser);
   await checkPerPromptWpmInLight(browser);
+  await checkComposerFontSize(browser);
 } finally {
   await browser.close();
   server?.kill();
