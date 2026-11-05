@@ -77,13 +77,14 @@ function GhostEditor({ draft, target, locked }: { draft: string; target: string;
       >
         {typed.map((ch, index) => {
           const ok = goal[index] === ch;
+          const shown = goal[index] ?? ch;
           return (
             <span
               key={index}
               data-typed={ok ? "ok" : "bad"}
               className={ok ? undefined : "rounded-[2px] bg-error/12 text-error-foreground"}
             >
-              {ch === " " && !ok ? "·" : ch}
+              {shown === " " && !ok ? "·" : shown}
             </span>
           );
         })}
