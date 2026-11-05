@@ -534,11 +534,14 @@ code {
 }
 
 .t3type-caret {
-  display: inline-block;
+  position: relative;
+}
+.t3type-caret::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: -0.75px;
   width: 1.5px;
-  height: 1.15em;
-  margin-inline: -0.75px;
-  vertical-align: -0.2em;
   background: var(--primary);
   animation: t3type-blink 1.1s steps(1) infinite;
 }
