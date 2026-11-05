@@ -1,7 +1,7 @@
-import { AArrowDownIcon, AArrowUpIcon, FolderIcon, GitBranchIcon, PaperclipIcon } from "lucide-react";
+import { AArrowDownIcon, AArrowUpIcon, CircleCheckIcon, FolderIcon, GitBranchIcon, PaperclipIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { personOf, sourceAuthor, threadBranch, type PromptDef } from "~/content/prompts";
-import { isWorking, nextPrompt, type GameState, type ThreadState } from "~/game/store";
+import { isDraftComplete, isWorking, nextPrompt, type GameState, type ThreadState } from "~/game/store";
 import {
   COMPOSER_FONT_MAX,
   COMPOSER_FONT_MIN,
@@ -56,7 +56,17 @@ function Main({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-function GhostEditor({ draft, target, locked }: { draft: string; target: string; locked: boolean }) {
+function GhostEditor({
+  draft,
+  target,
+  locked,
+  complete,
+}: {
+  draft: string;
+  target: string;
+  locked: boolean;
+  complete: boolean;
+}) {
   const typed = Array.from(draft);
   const goal = Array.from(target);
   const fontPx = useComposerFont();
@@ -65,6 +75,7 @@ function GhostEditor({ draft, target, locked }: { draft: string; target: string;
       className="relative flow-root font-sans"
       style={{ fontSize: fontPx }}
       data-testid="composer-editor-root"
+      data-complete={complete || undefined}
     >
       <div
         role="textbox"
@@ -73,7 +84,10 @@ function GhostEditor({ draft, target, locked }: { draft: string; target: string;
         aria-placeholder={target}
         data-testid="composer-editor"
         tabIndex={0}
-        className="composer-tiptap -m-1 block max-h-[8lh] min-h-[calc(2lh+--spacing(2))] overflow-y-auto p-1 whitespace-pre-wrap wrap-break-word bg-transparent leading-relaxed text-foreground focus:outline-none"
+        className={cn(
+          "composer-tiptap -m-1 block max-h-[8lh] min-h-[calc(2lh+--spacing(2))] overflow-y-auto p-1 whitespace-pre-wrap wrap-break-word bg-transparent leading-relaxed focus:outline-none",
+          complete ? "text-success-foreground" : "text-foreground",
+        )}
       >
         {typed.map((ch, index) => {
           const ok = goal[index] === ch;
@@ -94,7 +108,7 @@ function GhostEditor({ draft, target, locked }: { draft: string; target: string;
             </span>
           );
         })}
-        {locked ? null : <span className="t3type-caret" aria-hidden />}
+        {locked || complete ? null : <span className="t3type-caret" aria-hidden />}
         <span className="text-placeholder" data-ghost>
           {goal.slice(typed.length).join("")}
         </span>
@@ -127,6 +141,15 @@ function PromptKindLabel({ thread, prompt }: { thread: ThreadState; prompt: Prom
   return (
     <span className="truncate text-xs text-muted-foreground/80" data-prompt-kind="parody">
       Parody of {person.name} ({person.handle})
+    </span>
+  );
+}
+
+function DoneLabel() {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1 truncate text-xs text-success-foreground" data-prompt-done>
+      <CircleCheckIcon className="size-3.5 shrink-0" />
+      Done. Press Enter to send.
     </span>
   );
 }
@@ -238,6 +261,7 @@ export function ChatComposer({ game, thread }: { game: GameState; thread: Thread
   const prompt = nextPrompt(thread);
   const ended = game.session.status === "ended";
   const locked = working || !prompt || ended;
+  const complete = !locked && isDraftComplete(thread);
   const placeholder = ended
     ? "Session over. Press Enter to play again."
     : working
@@ -259,7 +283,7 @@ export function ChatComposer({ game, thread }: { game: GameState; thread: Thread
                 <div data-chat-composer-surface="true" className="rounded-2xl transition-[background-color] duration-200">
                   <div data-chat-composer-body="true" className="relative px-4 pb-2 pt-3.5 sm:pt-4">
                     <div className="relative">
-                      <GhostEditor draft={locked ? "" : thread.draft} target={placeholder} locked={locked} />
+                      <GhostEditor draft={locked ? "" : thread.draft} target={placeholder} locked={locked} complete={complete} />
                     </div>
                   </div>
                   <div
@@ -277,7 +301,7 @@ export function ChatComposer({ game, thread }: { game: GameState; thread: Thread
                       >
                         <PaperclipIcon className="translate-y-px" />
                       </Button>
-                      {prompt && !locked ? <PromptKindLabel thread={thread} prompt={prompt} /> : null}
+                      {complete ? <DoneLabel /> : prompt && !locked ? <PromptKindLabel thread={thread} prompt={prompt} /> : null}
                     </div>
                     <div
                       data-chat-composer-actions="right"
@@ -290,7 +314,7 @@ export function ChatComposer({ game, thread }: { game: GameState; thread: Thread
                         <FontSizeControl />
                         <ProviderModelPicker thread={thread.def} />
                       </div>
-                      {working ? <StopButton /> : <SendButton enabled={!locked && thread.draft.trim().length > 0} />}
+                      {working ? <StopButton /> : <SendButton enabled={complete} />}
                     </div>
                   </div>
                 </div>

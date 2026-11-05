@@ -1,4 +1,4 @@
-import { CircleCheckIcon, ClockIcon, KeyboardIcon, RotateCcwIcon, SpellCheckIcon } from "lucide-react";
+import { CircleCheckIcon, ClockIcon, KeyboardIcon, RotateCcwIcon } from "lucide-react";
 import { computeStats, restart, type GameState } from "~/game/store";
 import { formatDuration } from "~/lib/time";
 import { ChatMarkdown } from "./chat/MessagesTimeline";
@@ -6,16 +6,11 @@ import { Button } from "./ui/button";
 
 function verdict(stats: ReturnType<typeof computeStats>): string {
   if (stats.promptsSent === 0) return "No prompts sent. The agents enjoyed the quiet.";
-  if (stats.typosLiteral === 0) return "Every prompt was clean. The agents had nothing to misread, which they found disappointing.";
-  if (stats.typosLiteral <= 3) return `The agents took ${stats.typosLiteral === 1 ? "one typo" : `${stats.typosLiteral} typos`} literally. Nightly will be fine. Probably.`;
-  return `The agents took ${stats.typosLiteral} typos literally and shipped all of them.`;
+  return `You sent ${stats.promptsSent === 1 ? "one clean prompt" : `${stats.promptsSent} clean prompts`}.`;
 }
 
 export function EndSummary({ game }: { game: GameState }) {
   const stats = computeStats(game);
-  const literal = game.threads
-    .flatMap((thread) => thread.turns.flatMap((turn) => turn.diff.typos.map((typo) => ({ typo, thread }))))
-    .slice(0, 8);
   const rows = [
     { label: "Prompts sent", value: String(stats.promptsSent), key: "prompts" },
     { label: "Average speed", value: `${stats.wpm} wpm`, key: "wpm" },
@@ -60,29 +55,12 @@ export function EndSummary({ game }: { game: GameState }) {
               ))}
             </div>
           </div>
-          {literal.length > 0 ? (
-            <div className="mt-4">
-              <p className="px-0.5 pb-1 text-xs font-medium text-muted-foreground">What the agents read</p>
-              {literal.map(({ typo, thread }, index) => (
-                <div key={index} className="flex min-h-6 min-w-0 items-center gap-1.5 px-0.5 text-sm leading-relaxed">
-                  <span className="flex w-6 shrink-0 justify-center">
-                    <SpellCheckIcon className="size-4 text-icon-muted" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-secondary-label">
-                    <span className="font-mono text-[0.92em] text-error-foreground">{typo.typed}</span> instead of{" "}
-                    <span className="font-mono text-[0.92em]">{typo.target}</span>
-                    <span className="text-muted-foreground/70"> · {thread.def.title}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : null}
           <p className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <KeyboardIcon className="size-3.5" /> Enter plays again
             </span>
             <span className="inline-flex items-center gap-1">
-              <ClockIcon className="size-3.5" /> Each prompt is timed from its first key to Enter
+              <ClockIcon className="size-3.5" /> Each prompt is timed from its first key to its last
             </span>
           </p>
         </div>

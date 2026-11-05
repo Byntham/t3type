@@ -65,7 +65,7 @@ async function playFullSessionInDark(browser) {
   const { page, errors } = await openPage(browser, "dark", "speed=2");
   await page.screenshot({ path: join(shots, "dark-start.png") });
   let sent = 0;
-  let typoPrompts = 0;
+  let blockedTypoSends = 0;
   let switchesWhileRunning = 0;
   let midShot = false;
   const deadline = Date.now() + 180_000;
@@ -77,16 +77,17 @@ async function playFullSessionInDark(browser) {
     const busy = thread.turns.length > 0 && !thread.turns.at(-1).done;
     const prompt = thread.def.prompts[thread.turns.length];
     if (!busy && prompt) {
-      const typo = sent % 3 === 1;
-      const text = typo ? swapInnerLettersOfLongestWord(prompt.text) : prompt.text;
-      if (typo && text !== prompt.text) typoPrompts += 1;
-      const typeWithCorrection = sent === 0;
-      if (typeWithCorrection) {
-        await page.keyboard.type(text.slice(0, 5) + "x");
-        await page.keyboard.press("Backspace");
-        await page.keyboard.type(text.slice(5));
-      } else {
-        await page.keyboard.type(text);
+      const typo = sent % 3 === 1 ? swapInnerLettersOfLongestWord(prompt.text) : prompt.text;
+      if (typo !== prompt.text) {
+        await page.keyboard.type(typo);
+        await page.keyboard.press("Enter");
+        if (activeOf(await state(page)).turns.length === thread.turns.length) blockedTypoSends += 1;
+        for (let i = 0; i < typo.length; i += 1) await page.keyboard.press("Backspace");
+      }
+      await page.keyboard.type(prompt.text);
+      if (sent === 0) {
+        await page.locator("[data-prompt-done]").waitFor();
+        await page.screenshot({ path: join(shots, "dark-done.png") });
       }
       await page.keyboard.press("Enter");
       sent += 1;
@@ -113,13 +114,10 @@ async function playFullSessionInDark(browser) {
   const totalPrompts = end.threads.reduce((sum, t) => sum + t.def.prompts.length, 0);
   check(end.session.endReason === "done", `dark run ends with every thread done (got ${end.session.endReason})`);
   check(end.stats.promptsSent === totalPrompts, `sent all ${totalPrompts} prompts (got ${end.stats.promptsSent})`);
-  check(end.stats.typosLiteral >= typoPrompts, `typos taken literally: ${end.stats.typosLiteral} for ${typoPrompts} typo prompts`);
+  check(blockedTypoSends >= 3, `Enter did not send a prompt with a typo (${blockedTypoSends} times)`);
   check(switchesWhileRunning >= 5, `switched threads while an agent ran ${switchesWhileRunning} times`);
   check(end.stats.accuracy < 1 && end.stats.accuracy > 0.9, `accuracy is plausible (${(end.stats.accuracy * 100).toFixed(1)}%)`);
   check(end.stats.wpm > 0, `wpm is positive (${end.stats.wpm})`);
-  const literal = end.threads.flatMap((t) => t.turns).filter((turn) => turn.reply.literal);
-  const quotesTypo = literal.every((turn) => turn.diff.typos.length === 0 || turn.reply.text.includes(turn.diff.typos[0].typed));
-  check(literal.length > 0 && quotesTypo, `${literal.length} literal replies quote the typo as typed`);
   const summary = await page.locator("[data-summary]").allTextContents();
   check(summary.length === 5, `end screen shows ${summary.length} stat rows`);
   check(errors.length === 0, `no console errors in dark run${errors.length ? `: ${errors.join(" | ")}` : ""}`);

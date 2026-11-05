@@ -3,7 +3,7 @@
 # t3type
 
 A typing game that looks like T3 Code. You type prompts to coding agents as
-Theo, Julius and Maria. The agents take every typo literally.
+Theo, Julius and Maria.
 
 ```bash
 npm install
@@ -25,11 +25,13 @@ every push and pull request.
 
 ## How to play
 
-- The next prompt shows as gray ghost text in the composer. Type over it. Enter sends, typos included.
+- The next prompt shows as gray ghost text in the composer. Type over it. Wrong keys show in red
+  until you backspace and fix them.
+- When every character is right, the prompt turns green and locks. Press Enter to send it.
 - While an agent works, switch to another thread: Tab jumps to the next thread waiting on you,
   Shift+Tab goes back, and Ctrl+Shift+] / Ctrl+Shift+[ (Cmd on macOS) step through the sidebar
   like T3 Code's thread.next and thread.previous.
-- Every prompt is its own WPM test, timed from its first key to Enter. Time spent in other
+- Every prompt is its own WPM test, timed from its first key to its last. Time spent in other
   threads does not count. Each sent message shows its WPM and accuracy.
 - A session ends when every thread is done.
 
