@@ -225,8 +225,48 @@ async function checkComposerFontSize(browser) {
   await page.close();
 }
 
+async function checkWordsStayPutWhileTyping(browser) {
+  const { page, errors } = await openPage(browser, "dark", "speed=4&seed=1");
+  const lineOfEachChar = () =>
+    page.locator('[data-testid="composer-editor"]').evaluate((editor) => {
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+      const tops = [];
+      const range = document.createRange();
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        for (let i = 0; i < node.length; i += 1) {
+          range.setStart(node, i);
+          range.setEnd(node, i + 1);
+          tops.push(Math.round(range.getClientRects()[0]?.top ?? -1));
+        }
+      }
+      return tops;
+    });
+  const moved = [];
+  let wrapped = 0;
+  for (let width = 800; width <= 1200; width += 40) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.reload();
+    await page.waitForFunction(() => window.__game !== undefined);
+    await page.evaluate(() => document.fonts.ready);
+    const text = activeOf(await state(page)).def.prompts[0].text;
+    const before = await lineOfEachChar();
+    if (new Set(before).size > 1) wrapped += 1;
+    for (let n = 1; n <= text.length; n += 1) {
+      await page.keyboard.type(text[n - 1]);
+      const now = await lineOfEachChar();
+      const shifted = now.findIndex((top, i) => top !== before[i]);
+      if (shifted >= 0) moved.push(`${width}px "${text.slice(0, n).slice(-12)}|" moved "${text.slice(shifted, shifted + 8)}"`);
+    }
+  }
+  check(wrapped >= 5, `prompt wraps at ${wrapped} of 11 widths`);
+  check(moved.length === 0, `no character changes line while typing${moved.length ? ` (${moved.length} keys): ${moved.slice(0, 3).join("; ")}` : ""}`);
+  check(errors.length === 0, `no console errors in wrap run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
+  await page.close();
+}
+
 const browser = await chromium.launch();
 try {
+  await checkWordsStayPutWhileTyping(browser);
   await playFullSessionInDark(browser);
   await checkAutoSettle(browser);
   await checkPerPromptWpmInLight(browser);
