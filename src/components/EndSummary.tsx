@@ -21,12 +21,6 @@ export function EndSummary({ game }: { game: GameState }) {
     { label: "Average speed", value: `${stats.wpm} wpm`, key: "wpm" },
     { label: "Fastest prompt", value: stats.best ? `${stats.best.wpm} wpm in ${stats.best.thread}` : "-", key: "best" },
     { label: "Accuracy", value: `${Math.round(stats.accuracy * 100)}%`, key: "accuracy" },
-    { label: "Typos taken literally", value: String(stats.typosLiteral), key: "typos" },
-    {
-      label: "Parallelism",
-      value: `${stats.parallelism.toFixed(1)} agents on average, ${stats.peakAgents} at peak`,
-      key: "parallelism",
-    },
     { label: "Threads finished", value: `${stats.threadsDone} of ${game.threads.length}`, key: "threads" },
   ];
   return (
