@@ -255,6 +255,10 @@ async function checkWordsStayPutWhileTyping(browser) {
       if (shifted >= 0) moved.push(`${width}px "${text.slice(0, n).slice(-12)}|" moved "${text.slice(shifted, shifted + 8)}"`);
     }
   }
+  const shaping = await page
+    .locator('[data-testid="composer-editor"]')
+    .evaluate((el) => `${getComputedStyle(el).fontKerning} ${getComputedStyle(el).fontVariantLigatures}`);
+  check(shaping === "none none", `composer turns off kerning and ligatures so letters keep their x position (got ${shaping})`);
   check(wrapped >= 5, `prompt wraps at ${wrapped} of 11 widths`);
   check(moved.length === 0, `no character changes line while typing${moved.length ? ` (${moved.length} keys): ${moved.slice(0, 3).join("; ")}` : ""}`);
   check(errors.length === 0, `no console errors in wrap run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
