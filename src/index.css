@@ -1,5 +1,3 @@
-/* Trimmed from T3 Code apps/web/src/index.css (MIT, see THIRD_PARTY.md).
-   Only the tokens and rules this parody uses are kept. Values are unchanged. */
 @layer theme, base, components, utilities;
 @import "tailwindcss";
 
@@ -329,7 +327,6 @@
   }
 }
 
-/* Recompute contrast wherever a subtree owns its own semantic color palette. */
 :root,
 [data-app-sidebar] {
   --contrast-input: color-mix(
@@ -474,7 +471,6 @@ code {
   background: var(--app-scrollbar-thumb-hover);
 }
 
-/* Chat markdown rendering */
 .chat-markdown > :first-child {
   margin-top: 0;
 }
@@ -537,7 +533,6 @@ code {
   }
 }
 
-/* t3type only: the typed overlay over the ghost prompt. */
 .t3type-caret {
   display: inline-block;
   width: 1.5px;

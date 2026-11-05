@@ -18,7 +18,6 @@ const isMac = typeof navigator !== "undefined" && isMacPlatform(navigator.platfo
 
 function onKeyDown(event: KeyboardEvent) {
   const mod = isMac ? event.metaKey : event.ctrlKey;
-  // thread.next and thread.previous, the same chords as T3 Code (mod+shift+] and mod+shift+[).
   if (mod && event.shiftKey && (event.code === "BracketRight" || event.code === "BracketLeft")) {
     event.preventDefault();
     cycleThread(event.code === "BracketRight" ? 1 : -1);

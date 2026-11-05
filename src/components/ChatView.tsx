@@ -1,5 +1,3 @@
-// Static rebuild of T3 Code's ChatView column: header (ChatHeader,
-// WorkspaceBreadcrumb), timeline, and the composer overlay.
 import { PanelBottomIcon, PanelRightIcon, SquareMenuIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { personOf } from "~/content/prompts";
@@ -25,8 +23,7 @@ function BreadcrumbText({ children, className }: { children: React.ReactNode; cl
   );
 }
 
-// ui/toggle.tsx, variant ghost, size sm.
-const TOGGLE_CLASS =
+const GHOST_TOGGLE_SM_CLASS =
   "[&_svg]:-mx-0.5 relative inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-transparent font-medium text-base text-foreground outline-none transition-shadow hover:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:text-sm [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg]:pointer-events-none [&_svg]:shrink-0 h-8 min-w-8 px-[calc(--spacing(1.5)-1px)] sm:h-7 sm:min-w-7";
 
 function LiveStats({ game }: { game: GameState }) {
@@ -117,7 +114,7 @@ function ChatHeader({ game }: { game: GameState }) {
             aria-label={label}
             title={label}
             tabIndex={-1}
-            className={TOGGLE_CLASS}
+            className={GHOST_TOGGLE_SM_CLASS}
           >
             <Icon className="size-4" />
           </button>
@@ -134,7 +131,6 @@ export function ChatView({ game }: { game: GameState }) {
   const turnCount = thread.turns.length;
   const lastDone = thread.turns.at(-1)?.done ?? false;
 
-  // Follow the end of the timeline when the thread changes or a turn lands.
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;

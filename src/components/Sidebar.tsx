@@ -1,7 +1,3 @@
-// Static rebuild of T3 Code's thread sidebar (components/Sidebar.tsx,
-// components/sidebar/SidebarChrome.tsx, SidebarThreadHeader.tsx,
-// SidebarThreadRow.tsx, SidebarListMarkers.tsx). This is the default layout:
-// card rows plus the Working and Settled shelves. Class strings are kept.
 import {
   ChartNoAxesColumnIcon,
   ChevronDownIcon,
@@ -99,13 +95,11 @@ function ThreadRow(props: { thread: ThreadState; isActive: boolean; now: number 
   const working = isWorking(thread);
   const lastTurn = thread.turns.at(-1);
   const hasUnsentDraft = !isActive && thread.draft.length > 0;
-  // Same status ladder as SidebarThreadRow: working, then unseen completion.
   const topStatus = working
     ? { label: "Working", Icon: CircleDashedIcon, className: "text-info-foreground" }
     : thread.unread
       ? { label: "Done", Icon: CircleCheckIcon, className: "text-success-foreground" }
       : null;
-  // shouldRecedeSidebarThread: idle threads that were already read step back.
   const shouldRecede = !isActive && (working || !thread.unread);
   const diff = thread.turns.reduce(
     (sum, turn) =>
@@ -127,7 +121,6 @@ function ThreadRow(props: { thread: ThreadState; isActive: boolean; now: number 
   );
   const timeLabel = compactSidebarTimeLabel(formatRelativeElapsed(props.now - thread.updatedAt));
   const rowRef = useRef<HTMLLIElement>(null);
-  // revealActiveRow: keep the open thread visible when it moves between shelves.
   useEffect(() => {
     if (isActive) rowRef.current?.scrollIntoView({ block: "nearest" });
   }, [isActive, working]);
@@ -218,7 +211,6 @@ function ThreadRow(props: { thread: ThreadState; isActive: boolean; now: number 
   );
 }
 
-/** SidebarSectionHeader + CollapsibleSectionHeader: "Working 1", "Settled 0". */
 function SectionHeader(props: { label: string; count: number; className?: string; testId: string }) {
   return (
     <li className={cn("relative mx-0.5 h-8 list-none", props.className)} data-testid={props.testId}>
@@ -254,13 +246,11 @@ function SidebarUtilityItem({ icon, label }: { icon: ReactNode; label: string })
 }
 
 export function ThreadSidebar({ game }: { game: GameState }) {
-  // Default T3 Code sidebar: idle threads up top, running ones on the Working shelf.
   const ordered = projectOrder(game.threads.map((t) => t.def)).flatMap((project) =>
     game.threads.filter((t) => t.def.project === project),
   );
-  // Settled threads leave the list, except the open one while navigation moves on.
   const visible = ordered.filter((t) => !isSettled(t) || t.def.id === game.activeId);
-  const active = visible.filter((t) => !isWorking(t));
+  const idleThreads = visible.filter((t) => !isWorking(t));
   const workingThreads = visible.filter(isWorking);
   const settledCount = ordered.filter(isSettled).length;
   return (
@@ -288,7 +278,7 @@ export function ThreadSidebar({ game }: { game: GameState }) {
             role="presentation"
           >
             <ul role="presentation" className="relative flex flex-1 flex-col gap-px">
-              {active.map((thread) => (
+              {idleThreads.map((thread) => (
                 <ThreadRow
                   key={thread.def.id}
                   thread={thread}

@@ -1,6 +1,3 @@
-// Static rebuild of T3 Code's chat timeline rows: TimelineUserMessageRow,
-// TimelineAssistantRows, WorkLog, TimelineWorkGroupRows and ChangedFilesTree.
-// Class strings are kept from the source.
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -20,7 +17,6 @@ import { formatDuration, formatTimeOfDay, formatWorkingDurationLabel } from "~/l
 import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
 
-// Inline markdown: paragraphs, `code` and **bold**. Enough for scripted replies.
 function InlineMarkdown({ text }: { text: string }) {
   const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
   return (
@@ -55,8 +51,6 @@ export function ChatMarkdown({ text, className }: { text: string; className?: st
     </div>
   );
 }
-
-// User message
 
 function TypedWithTypos({ turn }: { turn: Turn }) {
   const typoWords = new Set(turn.diff.typos.map((typo) => typo.typed.toLowerCase()));
@@ -138,7 +132,8 @@ function UserMessageRow({ turn, thread }: { turn: Turn; thread: ThreadState }) {
   );
 }
 
-// Work log
+const FINISHED_WORK_OPEN_BY_DEFAULT = false;
+const TOOL_GROUP_OPEN_BY_DEFAULT = true;
 
 const TOOL_ICON: Record<ToolType, typeof EyeIcon> = {
   read: EyeIcon,
@@ -160,7 +155,6 @@ function toolLabel([type, label]: ToolRow): ReactNode {
   }
 }
 
-/** summarizeToolGroup from T3 Code's client-runtime work-log presentation. */
 export function summarizeTools(tools: ToolRow[]): string {
   const order: ToolType[] = [];
   const counts = new Map<ToolType, number>();
@@ -410,8 +404,6 @@ function TurnRows({
   const elapsed = Math.max(0, now - turn.startedAt);
 
   if (!turn.done) {
-    // Live: "Working for" sits under the prompt, finished tools fold into one
-    // summary row, and the tool in flight shines below it.
     const step = turn.durationMs / (tools.length + 1);
     const revealed = tools.filter((_, index) => elapsed >= step * (index + 0.4));
     const finished = revealed.slice(0, -1);
@@ -453,10 +445,8 @@ function TurnRows({
     );
   }
 
-  // T3 Code folds a finished turn's work under "Worked for" by default.
-  // Opening the fold shows the tool group expanded.
-  const foldExpanded = foldOverride ?? false;
-  const groupExpanded = groupOverride ?? true;
+  const foldExpanded = foldOverride ?? FINISHED_WORK_OPEN_BY_DEFAULT;
+  const groupExpanded = groupOverride ?? TOOL_GROUP_OPEN_BY_DEFAULT;
   return (
     <>
       <div className="pb-4">

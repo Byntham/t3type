@@ -1,6 +1,3 @@
-// Formatters copied from T3 Code (timestampFormat.ts, client-runtime models.ts,
-// shared orchestrationTiming.ts).
-
 export function formatRelativeElapsed(elapsedMs: number): string {
   const seconds = Math.floor(elapsedMs / 1000);
   if (seconds < 60) return "just now";
@@ -11,7 +8,6 @@ export function formatRelativeElapsed(elapsedMs: number): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-/** Sidebar rows drop the suffix: "now", "3m", "2h". */
 export function compactSidebarTimeLabel(label: string): string {
   if (label === "just now") return "now";
   return label.endsWith(" ago") ? label.slice(0, -4) : label;
@@ -41,7 +37,6 @@ export function formatClock(ms: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-/** "3:42 PM", like the timeline timestamps for today. */
 export function formatTimeOfDay(ms: number): string {
   return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }

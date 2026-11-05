@@ -6,14 +6,12 @@ import { fileURLToPath } from "node:url";
 const here = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
-  // Relative asset paths, so dist/ works from any static folder.
   base: "./",
   plugins: [react(), tailwindcss()],
   resolve: { alias: { "~": `${here}src` } },
   server: {
     host: "0.0.0.0",
     port: 5179,
-    // Reachable by tailnet hostname (for example gibo:5179), not only localhost.
     allowedHosts: true,
   },
 });
