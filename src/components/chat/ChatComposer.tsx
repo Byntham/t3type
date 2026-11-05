@@ -78,13 +78,19 @@ function GhostEditor({ draft, target, locked }: { draft: string; target: string;
         {typed.map((ch, index) => {
           const ok = goal[index] === ch;
           const shown = goal[index] ?? ch;
+          const missedSpace = shown === " " && !ok;
           return (
             <span
               key={index}
               data-typed={ok ? "ok" : "bad"}
-              className={ok ? undefined : "rounded-[2px] bg-error/12 text-error-foreground"}
+              className={cn(!ok && "rounded-[2px] bg-error/12 text-error-foreground", missedSpace && "relative")}
             >
-              {shown === " " && !ok ? "·" : shown}
+              {shown}
+              {missedSpace ? (
+                <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 text-center [line-height:normal]">
+                  ·
+                </span>
+              ) : null}
             </span>
           );
         })}
