@@ -142,15 +142,14 @@
           }
         },
         {
-          "kind": "real",
-          "text": "When you are done designing the API, get a second opinion from Opus with 'claude -p'",
-          "sourceUrl": "https://x.com/theo/status/2068595585121484866",
+          "kind": "parody",
+          "text": "when you are done designing the API, have an Opus subagent review it",
           "reply": {
-            "text": "Asked Opus for a review. It flagged one real issue, a missing effort field on resume, and three style nits I ignored.",
+            "text": "Delegated the review to an Opus subagent. It flagged one real issue, a missing effort field on resume, and then asked which model it was.",
             "tools": [
               [
-                "bash",
-                "claude -p \"review packages/provider-core/src/preamble.ts\""
+                "read",
+                "packages/provider-core/src/preamble.ts"
               ],
               [
                 "edit",
@@ -162,8 +161,7 @@
               2
             ],
             "seconds": 6
-          },
-          "sourceId": "theo-p-001"
+          }
         },
         {
           "kind": "parody",
@@ -245,89 +243,6 @@
             "seconds": 4
           },
           "sourceId": "julius-p-joke-001"
-        }
-      ]
-    },
-    {
-      "id": "julius-mobile",
-      "persona": "julius",
-      "project": "t3code-mobile",
-      "title": "Android nav rail complaints",
-      "model": "Claude Opus 5.5",
-      "prompts": [
-        {
-          "kind": "parody",
-          "text": "people say the android nav rail looks weird. it is literally the stock compose NavigationRail. check if we changed anything",
-          "reply": {
-            "text": "Checked. The nav rail is the stock component with default styling. The only change is the icon size, which matches the spec.",
-            "tools": [
-              [
-                "search",
-                "NavigationRail in apps/mobile/"
-              ],
-              [
-                "read",
-                "apps/mobile/src/navigation/Rail.tsx"
-              ]
-            ],
-            "diff": null,
-            "seconds": 4
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "ok add a one ui style option for the people who hate material. dont touch the default",
-          "reply": {
-            "text": "Added a One UI style option under Appearance. The default is still Material.",
-            "tools": [
-              [
-                "edit",
-                "apps/mobile/src/navigation/Rail.tsx"
-              ],
-              [
-                "edit",
-                "apps/mobile/src/settings/appearance.ts"
-              ]
-            ],
-            "diff": [
-              96,
-              3
-            ],
-            "seconds": 6
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "hmm the settings screen has every desktop toggle. mobile doesnt need half of these, list what makes no sense on a phone",
-          "reply": {
-            "text": "Eleven settings only make sense on desktop, including window blur, terminal font ligatures, and the dock icon behavior.",
-            "tools": [
-              [
-                "read",
-                "apps/mobile/src/settings/index.tsx"
-              ]
-            ],
-            "diff": null,
-            "seconds": 4
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "hide those on mobile. if someone asks why, its intentional",
-          "reply": {
-            "text": "Hid the eleven desktop-only settings on mobile and added a comment saying it is intentional.",
-            "tools": [
-              [
-                "edit",
-                "apps/mobile/src/settings/index.tsx"
-              ]
-            ],
-            "diff": [
-              14,
-              2
-            ],
-            "seconds": 4
-          }
         }
       ]
     },
@@ -421,159 +336,6 @@
             "seconds": 4
           },
           "sourceId": "julius-p-002"
-        }
-      ]
-    },
-    {
-      "id": "julius-ratelimit",
-      "persona": "julius",
-      "project": "t3code",
-      "title": "GitHub rate limits",
-      "model": "Claude Opus 5.5",
-      "prompts": [
-        {
-          "kind": "parody",
-          "text": "we keep hitting the 5k req/hr github limit when someone has 40 PRs open. figure out what we are spamming",
-          "reply": {
-            "text": "PR status polling makes one request per PR every 15 seconds, even when the window is in the background.",
-            "tools": [
-              [
-                "search",
-                "octokit in apps/server/src/"
-              ],
-              [
-                "read",
-                "apps/server/src/vcs/prStatus.ts"
-              ]
-            ],
-            "diff": null,
-            "seconds": 5
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "batch it into one graphql query and back off when the app is not focused",
-          "reply": {
-            "text": "Replaced per-PR polling with one GraphQL query. It backs off to every 2 minutes when unfocused. Requests per hour dropped from about 9,600 to 140.",
-            "tools": [
-              [
-                "edit",
-                "apps/server/src/vcs/prStatus.ts"
-              ],
-              [
-                "bash",
-                "pnpm test vcs"
-              ]
-            ],
-            "diff": [
-              62,
-              48
-            ],
-            "seconds": 6
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "nice. this will be a fun test. open the pr but dont merge it, theo will merge it on saturday anyway",
-          "reply": {
-            "text": "Opened the PR as a draft. Auto-merge is off.",
-            "tools": [
-              [
-                "bash",
-                "gh pr create --draft"
-              ]
-            ],
-            "diff": null,
-            "seconds": 3
-          }
-        }
-      ]
-    },
-    {
-      "id": "maria-redesign",
-      "persona": "maria",
-      "project": "t3code",
-      "title": "Redesign PR stack",
-      "model": "Claude Opus 5.5",
-      "prompts": [
-        {
-          "kind": "parody",
-          "text": "hey can you split my redesign branch into a stack of small prs, one per screen?? keep each one buildable",
-          "reply": {
-            "text": "Split the branch into 6 stacked PRs, one per screen. Each one builds and passes tests on its own.",
-            "tools": [
-              [
-                "bash",
-                "git log redesign --oneline"
-              ],
-              [
-                "bash",
-                "gt split --by-commit"
-              ],
-              [
-                "bash",
-                "pnpm build"
-              ]
-            ],
-            "diff": null,
-            "seconds": 6
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "add before and after screenshots to every pr description pls, light and dark",
-          "reply": {
-            "text": "Captured before and after screenshots in light and dark for all 6 PRs and added them to the descriptions.",
-            "tools": [
-              [
-                "bash",
-                "pnpm screenshots --compare main"
-              ],
-              [
-                "bash",
-                "gh pr edit --body-file"
-              ]
-            ],
-            "diff": null,
-            "seconds": 5
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "the model picker is still bad. make it searchable and put recent models at the top",
-          "reply": {
-            "text": "The model picker now has search and a Recent section at the top.",
-            "tools": [
-              [
-                "read",
-                "apps/web/src/components/chat/ModelPickerContent.tsx"
-              ],
-              [
-                "edit",
-                "apps/web/src/components/chat/ModelPickerContent.tsx"
-              ]
-            ],
-            "diff": [
-              88,
-              21
-            ],
-            "seconds": 6
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "WAIT it works?? NOOO WAYY. ship to nightly",
-          "reply": {
-            "text": "Shipped to nightly.",
-            "tools": [
-              [
-                "bash",
-                "git push origin HEAD:nightly"
-              ]
-            ],
-            "diff": null,
-            "seconds": 3
-          }
         }
       ]
     },
@@ -2077,9 +1839,9 @@
       "prompts": [
         {
           "kind": "parody",
-          "text": "make a tier list of every model in t3 code. s tier is just opus 5.5. WHERES FABLE",
+          "text": "make a tier list of every model in t3 code. s tier is just opus 5.5. WHERES FABLE 5.5",
           "reply": {
-            "text": "Made it. Opus 5.5 is alone in S tier, and Fable 5.5 has its own tier called not released.",
+            "text": "Made it. Opus 5.5 is alone in S tier. Fable 5.1 is in A, and Fable 5.5 has its own tier called not released.",
             "tools": [],
             "diff": null,
             "seconds": 4
@@ -2688,9 +2450,9 @@
         },
         {
           "kind": "parody",
-          "text": "this flow is so good i have to fork t3 code. julius is gonna be mad, get ahead of it",
+          "text": "wait t3 code spawns all three natively now?? kill the pi threads",
           "reply": {
-            "text": "Drafted an apology to Julius. Your fork is 3 commits old and already has a kanban.",
+            "text": "Killed the 31 Pi threads. Two of them spawned replacements on the way out, so I killed those too.",
             "tools": [],
             "diff": null,
             "seconds": 4
@@ -3245,69 +3007,6 @@
       ]
     },
     {
-      "id": "g-julius-while",
-      "persona": "julius",
-      "project": "t3code",
-      "title": "while (true)",
-      "model": "GPT-6.1 Sol",
-      "basis": [
-        "https://x.com/jullerino/status/2040957101997195514"
-      ],
-      "prompts": [
-        {
-          "kind": "parody",
-          "text": "codex got scared of while (true) and rewrote our loop into something worse. find that loop",
-          "reply": {
-            "text": "Found it. The loop is for (;;), which is the same loop with the words taken out.",
-            "tools": [
-              [
-                "search",
-                "for (;; in apps/server/src"
-              ]
-            ],
-            "diff": null,
-            "seconds": 3
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "put the loop back with a real exit. do not rename true to make a linter feel better",
-          "reply": {
-            "text": "I wrote while (!false), so the condition is still true and the word true is absent.",
-            "tools": [
-              [
-                "edit",
-                "apps/server/src/agent/loop.ts"
-              ]
-            ],
-            "diff": [
-              3,
-              3
-            ],
-            "seconds": 4
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "while (!false) is the same fear in a hat. i want while (true) and a break. then stop helping",
-          "reply": {
-            "text": "It is while (true) now, with a break under it. I am not going to explain why true is allowed.",
-            "tools": [
-              [
-                "edit",
-                "apps/server/src/agent/loop.ts"
-              ]
-            ],
-            "diff": [
-              2,
-              1
-            ],
-            "seconds": 3
-          }
-        }
-      ]
-    },
-    {
       "id": "g-maria-50ms",
       "persona": "maria",
       "project": "t3code",
@@ -3385,73 +3084,6 @@
               1
             ],
             "seconds": 4
-          }
-        }
-      ]
-    },
-    {
-      "id": "g-maria-j3",
-      "persona": "maria",
-      "project": "t3code",
-      "title": "Call it j3",
-      "model": "Claude Opus 5.5",
-      "basis": [
-        "https://x.com/maria_rcks/status/2115217098213302467"
-      ],
-      "prompts": [
-        {
-          "kind": "parody",
-          "text": "it should be called j3 code. rename the words users see. do not rename the repo, he will notice the repo",
-          "reply": {
-            "text": "Renamed the visible strings to j3 code. The repo is still t3code.",
-            "tools": [
-              [
-                "search",
-                "T3 Code in apps/web/src"
-              ],
-              [
-                "edit",
-                "apps/web/src/brand.ts"
-              ]
-            ],
-            "diff": [
-              6,
-              6
-            ],
-            "seconds": 4
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "about box can say me and theo are here to annoy julius every once in a while. keep it to one line",
-          "reply": {
-            "text": "The about box is one line: theo and maria are here to annoy julius every once in a while.",
-            "tools": [
-              [
-                "edit",
-                "apps/web/src/components/About.tsx"
-              ]
-            ],
-            "diff": [
-              1,
-              1
-            ],
-            "seconds": 3
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "tag julius. if he asks, this was a bit. if he merges it, that is on him. write both of those in the pr",
-          "reply": {
-            "text": "Tagged Julius. The PR says this was a bit, and that merging it is on him.",
-            "tools": [
-              [
-                "bash",
-                "gh pr create --reviewer jullerino"
-              ]
-            ],
-            "diff": null,
-            "seconds": 3
           }
         }
       ]
@@ -3653,58 +3285,6 @@
               15
             ],
             "seconds": 5
-          }
-        }
-      ]
-    },
-    {
-      "id": "g-dax-carl",
-      "persona": "dax",
-      "project": "opencode",
-      "title": "Stop at Carl",
-      "model": "Grok 4.7",
-      "basis": [
-        "https://x.com/thdxr/status/2116319701252841882"
-      ],
-      "prompts": [
-        {
-          "kind": "parody",
-          "text": "trace the gpu offer. write the chain. they have them, then they are a broker, then they are waiting on a buyer",
-          "reply": {
-            "text": "Three names deep, each one pointing at the next. No GPUs have shown up.",
-            "tools": [
-              [
-                "read",
-                "notes/gpu-offers.md"
-              ]
-            ],
-            "diff": null,
-            "seconds": 4
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "keep my numbering, there is no 4. one of them is always named carl. find which step that is",
-          "reply": {
-            "text": "Numbered 1, 2, 3, 5, and Carl is step 5. He has the room, and the note says it is being upgraded.",
-            "tools": [
-              [
-                "search",
-                "carl in notes/gpu-offers.md"
-              ]
-            ],
-            "diff": null,
-            "seconds": 3
-          }
-        },
-        {
-          "kind": "parody",
-          "text": "stop at carl. he has the room. nobody in that chain has the gpus. do not go back to the broker",
-          "reply": {
-            "text": "Stopped at Carl, who has the room while nobody in the chain has the GPUs. There is no step 4.",
-            "tools": [],
-            "diff": null,
-            "seconds": 2
           }
         }
       ]
