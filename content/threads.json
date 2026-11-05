@@ -1,5 +1,5 @@
 {
-  "about": "Threads for swetype. kind=real prompts are verbatim and sourced. kind=parody prompts are written by us in the style of each person and are labeled as parody in the game. basis lists the real posts each parody thread riffs on. Drafts from two writers are in drafts/.",
+  "about": "Threads for swetype. kind=real prompts are verbatim and link to their post. kind=parody prompts are written for the game in the style of each person and are labeled as parody in the game. basis lists the public posts each parody thread riffs on.",
   "people": {
     "theo": {
       "name": "Theo",

@@ -1,7 +1,7 @@
 // Thread content for t3type. The source of truth is
-// content/research/t3-threads.json at the repo root, imported as-is so the
+// content/threads.json at the repo root, imported as-is so the
 // prompt text stays exactly as written. This file only adds types and helpers.
-import raw from "../../content/research/t3-threads.json";
+import raw from "../../content/threads.json";
 
 /** Short lowercase key per person: theo, julius, maria, plus mutuals like tibo. */
 export type PersonaKey = string;

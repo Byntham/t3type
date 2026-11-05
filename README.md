@@ -24,7 +24,7 @@ npm test         # Playwright play test
 
 ## Content
 
-Threads come from `content/research/t3-threads.json`, imported unchanged by
+Threads come from `content/threads.json`, imported unchanged by
 `src/content/prompts.ts`. Prompts marked `real` are verbatim and link to their
 post. Everything else is parody and labeled as such.
 
@@ -32,6 +32,3 @@ URL options for testing: `?speed=4` runs the agents 4x faster, `?seed=N` replays
 the same thread draw, `?theme=light` or `?theme=dark` forces a theme.
 
 See THIRD_PARTY.md for the T3 Code MIT notice.
-
-The research behind the threads is in `content/research/`: `t3-voices.json` holds the verified
-posts and style notes, and `t3-threads.json` holds the threads.

@@ -2,5 +2,5 @@ node_modules
 dist
 tests/shots/*.png
 
-# Raw scraped timelines: local research only, not redistributed.
-content/research/timelines/
+# Research (scraped posts, voice notes, writer drafts): local only.
+content/research/
