@@ -8,44 +8,19 @@ import {
   type RealPrompt,
 } from "~/content/prompts";
 import { correctCharsOf, wpmOf } from "~/game/store";
-import { buildReply, diffPrompt } from "~/game/typos";
-
-describe("diffPrompt", () => {
-  it("lines up a misspelled word with the word it was meant to be", () => {
-    expect(diffPrompt("fix the sidbar", "fix the sidebar")).toEqual({
-      typos: [{ target: "sidebar", typed: "sidbar" }],
-      missing: [],
-      extra: [],
-    });
-  });
-
-  it("reports left-out words as missing and added words as extra", () => {
-    expect(diffPrompt("fix sidebar now", "fix the sidebar")).toEqual({
-      typos: [],
-      missing: ["the"],
-      extra: ["now"],
-    });
-  });
-
-  it("ignores case and trailing punctuation", () => {
-    expect(diffPrompt("Fix the sidebar", "fix the sidebar.").typos).toEqual([]);
-  });
-});
+import { buildReply } from "~/game/reply";
 
 describe("buildReply", () => {
-  const scripted = { text: "Done.", tools: [["edit", "src/Sidebar.tsx"]] as const, diff: [4, 2] as const, seconds: 3 };
-
-  it("returns the scripted reply for a clean prompt", () => {
-    const reply = buildReply({ ...scripted, tools: [...scripted.tools] }, diffPrompt("fix it", "fix it"), "theo");
-    expect(reply.literal).toBe(false);
+  it("lists each edited file with the scripted line counts", () => {
+    const reply = buildReply({ text: "Done.", tools: [["edit", "src/Sidebar.tsx"]], diff: [4, 2], seconds: 3 });
     expect(reply.text).toBe("Done.");
     expect(reply.files).toEqual([{ path: "src/Sidebar.tsx", additions: 4, deletions: 2 }]);
   });
+});
 
-  it("takes a typo literally", () => {
-    const reply = buildReply({ ...scripted, tools: [...scripted.tools] }, diffPrompt("fix the sidbar", "fix the sidebar"), "theo");
-    expect(reply.literal).toBe(true);
-    expect(reply.text).toContain("`sidbar`");
+describe("prompts", () => {
+  it("only use characters you can type on a US keyboard, so every prompt can be finished", () => {
+    for (const thread of THREADS) for (const prompt of thread.prompts) expect(prompt.text).toMatch(/^[\x20-\x7e]+$/);
   });
 });
 

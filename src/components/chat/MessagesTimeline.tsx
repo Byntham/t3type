@@ -52,29 +52,6 @@ export function ChatMarkdown({ text, className }: { text: string; className?: st
   );
 }
 
-function TypedWithTypos({ turn }: { turn: Turn }) {
-  const typoWords = new Set(turn.diff.typos.map((typo) => typo.typed.toLowerCase()));
-  const pieces = turn.typed.split(/(\s+)/);
-  return (
-    <>
-      {pieces.map((piece, index) => {
-        const bare = piece.replace(/^[^\p{L}\p{N}@`$/._-]+|[^\p{L}\p{N}`/_-]+$/gu, "").toLowerCase();
-        return typoWords.has(bare) && bare.length > 0 ? (
-          <span
-            key={index}
-            className="underline decoration-error-foreground/70 decoration-wavy decoration-1 underline-offset-[3px]"
-            title="The agent took this literally"
-          >
-            {piece}
-          </span>
-        ) : (
-          <Fragment key={index}>{piece}</Fragment>
-        );
-      })}
-    </>
-  );
-}
-
 function PromptSource({ turn, thread }: { turn: Turn; thread: ThreadState }) {
   const prompt = turn.prompt;
   const person = personOf(thread.def.persona);
@@ -114,9 +91,7 @@ function UserMessageRow({ turn, thread }: { turn: Turn; thread: ThreadState }) {
       <div className="relative min-w-0 max-w-[80%] rounded-2xl bg-message p-3 text-message-foreground">
         <h3 className="sr-only select-none">You</h3>
         <div className="chat-markdown w-full min-w-0 text-sm leading-relaxed whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
-          <p>
-            <TypedWithTypos turn={turn} />
-          </p>
+          <p>{turn.prompt.text}</p>
         </div>
       </div>
       <div className="flex max-w-[80%] flex-wrap items-baseline justify-end gap-x-2">
@@ -479,7 +454,7 @@ function TurnRows({
           ) : null}
         </div>
       ) : null}
-      <div className="group/assistant pb-4" data-assistant-message data-literal={turn.reply.literal || undefined}>
+      <div className="group/assistant pb-4" data-assistant-message>
         <div className="relative min-w-0 px-1 py-0.5">
           <h3 className="sr-only select-none">T3 Code</h3>
           <ChatMarkdown text={turn.reply.text} />
@@ -501,7 +476,7 @@ export function MessagesTimeline({ thread, now }: { thread: ThreadState; now: nu
       <div className="flex h-full flex-col items-center justify-center gap-1 pb-40">
         <p className="text-sm text-muted-foreground">Send a message to start the conversation.</p>
         <p className="text-xs text-muted-foreground/70">
-          Type the gray prompt below. Enter sends it, typos included.
+          Type the gray prompt below. Fix every red letter, then press Enter.
         </p>
       </div>
     );
