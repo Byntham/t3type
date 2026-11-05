@@ -31,8 +31,8 @@
     import { h } from "./shared/ui.js";
     const grid = document.getElementById("grid");
     GAMES.forEach((g, i) => grid.appendChild(
-      h("a", { class: "card panel", href: `games/${g.slug}/index.html` },
-        h("div", { class: "n" }, `${(i + 1) % 10}`),
+      h("a", { class: "card panel", href: g.href ?? `games/${g.slug}/index.html` },
+        h("div", { class: "n" }, i < 10 ? `${(i + 1) % 10}` : ""),
         h("h2", {}, g.title),
         h("div", { class: "idea" }, g.idea),
         h("p", {}, g.how),

@@ -394,12 +394,10 @@ function TurnRows({
   turn,
   thread,
   now,
-  latest,
 }: {
   turn: Turn;
   thread: ThreadState;
   now: number;
-  latest: boolean;
 }) {
   const [foldOverride, setFoldOverride] = useState<boolean | null>(null);
   const [groupOverride, setGroupOverride] = useState<boolean | null>(null);
@@ -450,8 +448,10 @@ function TurnRows({
     );
   }
 
-  const foldExpanded = foldOverride ?? latest;
-  const groupExpanded = groupOverride ?? latest;
+  // T3 Code folds a finished turn's work under "Worked for" by default.
+  // Opening the fold shows the tool group expanded.
+  const foldExpanded = foldOverride ?? false;
+  const groupExpanded = groupOverride ?? true;
   return (
     <>
       <div className="pb-4">
@@ -511,17 +511,15 @@ export function MessagesTimeline({ thread, now }: { thread: ThreadState; now: nu
       </div>
     );
   }
-  const lastDone = thread.turns.findLastIndex((turn) => turn.done);
   return (
     <div className="chat-content-lane overflow-x-clip" data-timeline-root="true">
       <div className="h-3 sm:h-4" />
-      {thread.turns.map((turn, index) => (
+      {thread.turns.map((turn) => (
         <TurnRows
           key={turn.id}
           turn={turn}
           thread={thread}
           now={now}
-          latest={index === lastDone}
         />
       ))}
     </div>

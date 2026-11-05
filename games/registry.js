@@ -20,4 +20,7 @@ export const GAMES = [
     how: "Type a quote with the author hidden. Guess the author early for more points." },
   { slug: "code-review", title: "Code Review", idea: "Approve the right diff.",
     how: "Two lines: a real lesson and its bad twin. Approve one by typing it." },
+  { slug: "t3type", title: "t3type", idea: "The agent takes you literally.",
+    href: "t3type/dist/index.html",
+    how: "A T3 Code parody. Type prompts as Theo, Julius and Maria. Typos ship as typed. Run agents in parallel with Tab. Build it first with npm run build in t3type/." },
 ];
