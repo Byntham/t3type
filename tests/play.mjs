@@ -264,8 +264,28 @@ async function checkWordsStayPutWhileTyping(browser) {
   await page.close();
 }
 
+async function checkWrongKeysShowExpectedText(browser) {
+  const { page, errors } = await openPage(browser, "dark", "speed=4&seed=1");
+  const text = activeOf(await state(page)).def.prompts[0].text;
+  const space = text.indexOf(" ");
+  const wrong = (ch) => (ch === "q" ? "z" : "q");
+  const typed = text.slice(0, 2) + wrong(text[2]) + text.slice(3, space) + "x" + text.slice(space + 1, space + 4);
+  await page.keyboard.type(typed);
+  await page.screenshot({ path: join(shots, "dark-wrong-keys.png") });
+  const spans = await page
+    .locator('[data-testid="composer-editor"] [data-typed]')
+    .evaluateAll((els) => els.map((el) => ({ text: el.textContent, typed: el.dataset.typed })));
+  const bad = spans.map((s, i) => (s.typed === "bad" ? i : -1)).filter((i) => i >= 0);
+  check(bad.join(",") === `2,${space}`, `wrong keys are marked at 2 and ${space} (got ${bad.join(",")})`);
+  check(spans[2]?.text === text[2], `a wrong letter shows the expected "${text[2]}" (got "${spans[2]?.text}")`);
+  check(spans[space]?.text === "\u00b7", `a key typed in place of a space shows a dot (got "${spans[space]?.text}")`);
+  check(errors.length === 0, `no console errors in wrong key run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
+  await page.close();
+}
+
 const browser = await chromium.launch();
 try {
+  await checkWrongKeysShowExpectedText(browser);
   await checkWordsStayPutWhileTyping(browser);
   await playFullSessionInDark(browser);
   await checkAutoSettle(browser);
