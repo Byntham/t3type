@@ -12,6 +12,7 @@ async function playRound(page, { jitter, shotAt, shot, stopAfter = Infinity }) {
   for (;;) {
     const s = await state(page);
     if (s.phase !== "play") break;
+    if (s.countInLeft > 0) { await page.waitForTimeout(s.countInLeft + 20); continue; }
     if (s.wordIndex >= s.n) { await page.waitForTimeout(100); continue; }
     if (typed >= stopAfter) break;
     const i = s.wordIndex;
@@ -37,6 +38,13 @@ const errors = await withGame("steady-state", { seed: 2 }, async (page, { shot }
   console.log("setup", { tempo: s0.tempo, passage: s0.passageId });
   await shot("1-setup");
   await page.keyboard.press("Enter");
+  // Keys during the count-in must do nothing.
+  await page.waitForTimeout(300);
+  await page.keyboard.type("abc");
+  const sc = await state(page);
+  console.log("count-in", { countInLeft: sc.countInLeft, pos: sc.pos });
+  if (sc.pos !== 0) throw new Error("typing during the count-in should be ignored");
+  await shot("1b-countin");
   await playRound(page, { jitter, shotAt: 6, shot });
   await waitPhase(page, "results");
   const s = await state(page);
@@ -60,3 +68,16 @@ const errorsMobile = await withGame("steady-state", { seed: 5, viewport: { width
   await shot("m3-results");
 });
 console.log("mobile errors:", errorsMobile);
+
+// Idle round: type nothing. Timing stats should show "-", not a perfect score.
+const errorsIdle = await withGame("steady-state", { seed: 9 }, async (page, { shot }) => {
+  for (let k = 0; k < 30; k++) await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Enter");
+  await waitPhase(page, "results");
+  const s = await state(page);
+  const text = await page.evaluate(() => document.querySelector(".ss-finding").textContent);
+  console.log("idle results", { tempo: s.tempo, counts: s.counts, sd: s.sd, finding: text.slice(0, 90) });
+  if (s.sd != null || !text.includes("not enough data")) throw new Error("idle round should report not enough data");
+  await shot("4-idle");
+});
+console.log("idle errors:", errorsIdle);

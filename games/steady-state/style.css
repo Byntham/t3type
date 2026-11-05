@@ -44,34 +44,46 @@
   position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
   font-family: var(--mono); font-weight: 700; color: var(--accent-2);
 }
+/* A note is a bar as wide as its word's time slot. Its right edge is the
+   moment the space is due, and the stem marks that edge. */
 .ss-note {
   position: absolute; left: 0;
+  height: 28px;
   font-family: var(--mono);
   font-size: 0.95rem;
-  white-space: nowrap;
   will-change: transform;
 }
 .ss-note span {
-  display: inline-block;
-  padding: 2px 8px;
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
+  overflow: hidden;
+  white-space: nowrap;
   border-radius: 6px;
   background: var(--panel);
   border: 1px solid var(--line);
+  border-right-width: 3px;
   color: var(--muted);
 }
 .ss-note::after {
   content: "";
-  position: absolute; left: 50%; width: 2px; margin-left: -1px; height: 33px;
+  position: absolute; right: 0; width: 2px; height: 33px;
   background: var(--line);
 }
 .ss-note.high { top: 14px; }
-.ss-note.high::after { top: 100%; }
+.ss-note.high::after { top: 100%; height: 33px; }
 .ss-note.low { bottom: 14px; }
 .ss-note.low::after { bottom: 100%; }
 .ss-note.typing span { color: var(--text); border-color: var(--accent); font-weight: 700; box-shadow: 0 0 0 1px var(--accent); }
 .ss-note[class*="j-"] span { color: var(--j); border-color: var(--j); background: color-mix(in srgb, var(--j) 14%, var(--panel)); }
 .ss-note[class*="j-"]::after { background: var(--j); }
 .ss-note.j-miss span { text-decoration: line-through; }
+
+/* Timing windows drawn on the hit line */
+.ss-win { position: absolute; top: 0; bottom: 0; left: 0; pointer-events: none; }
+.ss-win.good { background: color-mix(in srgb, var(--accent-2) 14%, transparent); }
+.ss-win.perfect { background: color-mix(in srgb, var(--good) 30%, transparent); border-left: 1px solid color-mix(in srgb, var(--good) 60%, transparent); border-right: 1px solid color-mix(in srgb, var(--good) 60%, transparent); }
+.ss-status { font-size: 0.85rem; margin-top: -6px; }
 
 .ss-hit {
   position: absolute; top: 0; bottom: 0; left: 20%;
@@ -128,5 +140,7 @@
 
 @media (max-width: 560px) {
   .ss-counts { margin-left: 0; }
-  .ss-note { font-size: 0.85rem; }
+  .ss-note { font-size: 0.8rem; height: 24px; }
+  .ss-note.high { top: 18px; }
+  .ss-note.low { bottom: 18px; }
 }

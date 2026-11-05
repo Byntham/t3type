@@ -12,6 +12,11 @@
 }
 .gb-sha { color: var(--warn); }
 .gb-who { color: var(--faint); letter-spacing: 0.1em; }
+.gb-who.gb-shown { color: var(--text); letter-spacing: normal; }
+
+/* Text past the lookahead: a faint block per character, words hidden. */
+.typing .ch.gb-hid { color: transparent; background: color-mix(in srgb, var(--faint) 30%, transparent); }
+.typing .ch.gb-hid.space { background: none; }
 
 .gb-meter { display: flex; align-items: center; gap: 12px; font-size: 0.92rem; color: var(--muted); flex-wrap: wrap; }
 .gb-meter b { color: var(--accent-2); font-family: var(--mono); }
@@ -30,6 +35,7 @@
 .gb-prompt-title { grid-column: 1 / -1; font-weight: 600; }
 .gb-choice { text-align: left; display: flex; align-items: baseline; gap: 8px; }
 .gb-choice .muted { font-size: 0.85rem; }
+.gb-pass { grid-column: 1 / -1; }
 
 .gb-verdict { font-size: 1.05rem; }
 .gb-good { color: var(--good); }

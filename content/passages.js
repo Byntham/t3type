@@ -18,7 +18,7 @@ export const CLASSICS = [
     topic: "performance",
     sourceUrl: "https://dl.acm.org/doi/10.1145/356635.356640",
     filler: ["really", "basically"],
-    antiPattern: "Optimize every line as you write it, because all code is on the hot path.",
+    antiPattern: "Write efficient code from the start, since small costs add up across a program.",
   },
   {
     id: "pike-001",
@@ -29,7 +29,7 @@ export const CLASSICS = [
     topic: "performance",
     sourceUrl: "https://users.ece.utexas.edu/~adnan/pike.html",
     filler: ["actually", "simply"],
-    antiPattern: "Trust your gut about where the program is slow and add speed hacks there first.",
+    antiPattern: "Optimize the part you know is slow first. Experience is a good guide to bottlenecks.",
   },
   {
     id: "pike-002",
@@ -40,7 +40,7 @@ export const CLASSICS = [
     topic: "design",
     sourceUrl: "https://users.ece.utexas.edu/~adnan/pike.html",
     filler: ["very", "really"],
-    antiPattern: "Pick a clever algorithm first, then bend the data to fit it.",
+    antiPattern: "Get the algorithm right and the data model follows.",
   },
   {
     id: "beck-001",
@@ -51,7 +51,7 @@ export const CLASSICS = [
     topic: "design",
     sourceUrl: "https://x.com/KentBeck/status/250733358307500032",
     filler: ["just", "simply"],
-    antiPattern: "Force the change into the code as it is, and clean up later if there is time.",
+    antiPattern: "Make the change now, then refactor once it works.",
   },
   {
     id: "gall-001",
@@ -62,7 +62,7 @@ export const CLASSICS = [
     topic: "simplicity",
     sourceUrl: "https://en.wikipedia.org/wiki/John_Gall_(author)",
     filler: ["basically", "actually"],
-    antiPattern: "Design the full complex system up front so you never have to change it.",
+    antiPattern: "Design the full system up front so it scales.",
   },
   {
     id: "kernighan-001",
@@ -73,7 +73,7 @@ export const CLASSICS = [
     topic: "debugging",
     sourceUrl: "https://en.wikipedia.org/wiki/The_Elements_of_Programming_Style",
     filler: ["really", "just"],
-    antiPattern: "Write the most clever code you can, since debugging will be easy later.",
+    antiPattern: "Clever, compact code has fewer lines, so it has fewer bugs to find.",
   },
   {
     id: "hyrum-001",
@@ -84,7 +84,7 @@ export const CLASSICS = [
     topic: "design",
     sourceUrl: "https://www.hyrumslaw.com/",
     filler: ["basically", "literally"],
-    antiPattern: "Users only depend on what the docs promise, so you can change anything else freely.",
+    antiPattern: "Users depend on what the docs promise. Undocumented behavior is free to change.",
   },
   {
     id: "metz-001",
@@ -95,7 +95,7 @@ export const CLASSICS = [
     topic: "simplicity",
     sourceUrl: "https://sandimetz.com/blog/2016/1/20/the-wrong-abstraction",
     filler: ["really", "always"],
-    antiPattern: "Extract a shared abstraction the second time you see similar code.",
+    antiPattern: "Extract a shared helper the second time you copy code. Duplication is the bigger risk.",
   },
   {
     id: "hoare-001",
@@ -106,7 +106,7 @@ export const CLASSICS = [
     topic: "simplicity",
     sourceUrl: "https://en.wikiquote.org/wiki/C._A._R._Hoare",
     filler: ["very", "basically"],
-    antiPattern: "Complex designs are safer because nobody can find obvious problems in them.",
+    antiPattern: "A rich design with many safeguards is the safest kind.",
   },
   {
     id: "torvalds-001",
@@ -117,7 +117,7 @@ export const CLASSICS = [
     topic: "design",
     sourceUrl: "https://lwn.net/Articles/193245/",
     filler: ["really", "mostly"],
-    antiPattern: "Focus on the code. The data structures will sort themselves out.",
+    antiPattern: "Focus on clean code first. The data structures can follow.",
   },
   {
     id: "conway-001",
@@ -128,7 +128,7 @@ export const CLASSICS = [
     topic: "teams",
     sourceUrl: "https://www.melconway.com/Home/Committees_Paper.html",
     filler: ["basically", "always"],
-    antiPattern: "Team structure has no effect on the shape of the software.",
+    antiPattern: "Design the architecture on its merits. Team structure is an org chart issue.",
   },
   {
     id: "perlis-001",
@@ -139,7 +139,7 @@ export const CLASSICS = [
     topic: "simplicity",
     sourceUrl: "https://cpsc.yale.edu/epigrams-programming",
     filler: ["really"],
-    antiPattern: "Start simple and never let the design get complex.",
+    antiPattern: "Start with the simplest design and keep it that way as you go.",
   },
   {
     id: "thompson-001",
@@ -150,7 +150,7 @@ export const CLASSICS = [
     topic: "simplicity",
     sourceUrl: "https://en.wikiquote.org/wiki/Ken_Thompson",
     filler: ["just"],
-    antiPattern: "When in doubt, reach for the cleverest algorithm you know.",
+    antiPattern: "When in doubt, pick the more efficient algorithm. It saves a rewrite later.",
   },
   {
     id: "lamport-001",
@@ -161,7 +161,7 @@ export const CLASSICS = [
     topic: "debugging",
     sourceUrl: "https://lamport.azurewebsites.net/pubs/distributed-system.txt",
     filler: ["really", "actually"],
-    antiPattern: "If your own machine is healthy, your distributed system is healthy.",
+    antiPattern: "Monitor your own services well and the distributed system is covered.",
   },
   {
     id: "brooks-001",
@@ -172,7 +172,7 @@ export const CLASSICS = [
     topic: "teams",
     sourceUrl: "https://en.wikipedia.org/wiki/Brooks%27s_law",
     filler: ["simply", "always"],
-    antiPattern: "To catch up on a late project, add more engineers.",
+    antiPattern: "A late project catches up fastest when you add engineers.",
   },
   {
     id: "armstrong-001",
@@ -183,7 +183,7 @@ export const CLASSICS = [
     topic: "craft",
     sourceUrl: "https://en.wikiquote.org/wiki/Joe_Armstrong",
     filler: ["basically"],
-    antiPattern: "Make it fast first. You can make it readable later.",
+    antiPattern: "Design for speed first. Clean it up later.",
   },
   {
     id: "karlton-001",
@@ -194,7 +194,7 @@ export const CLASSICS = [
     topic: "craft",
     sourceUrl: "https://martinfowler.com/bliki/TwoHardThings.html",
     filler: ["really"],
-    antiPattern: "Names and caches are easy. Pick the first thing that comes to mind.",
+    antiPattern: "Names are easy to change later. Pick one and move on.",
   },
 ];
 

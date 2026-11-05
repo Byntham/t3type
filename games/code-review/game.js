@@ -104,10 +104,10 @@ function paint() {
   }));
   if (!done) {
     render(els.foot, r.typed.length === 0
-      ? h("span", {}, "Start typing either line. The first letters pick which one you are approving.")
+      ? h("span", {}, "Start typing either line. The first letters pick which one you are approving. A wrong key is rejected, so just type the right one. ", h("kbd", {}, "Backspace"), " backs out of a line.")
       : r.cands.length > 1
         ? h("span", {}, "Both lines still match. Keep going.")
-        : h("span", {}, "Approving this line. ", h("kbd", {}, "Backspace"), " to back out."));
+        : h("span", {}, "Approving this line. A wrong key is rejected, so type the right one. ", h("kbd", {}, "Backspace"), " backs out."));
   }
 }
 

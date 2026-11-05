@@ -1,24 +1,27 @@
-// Cache Miss: read the passage, then type it from memory. Wrong keys are
-// rejected. Hold Tab to peek at the current word, which is a cache miss and
-// costs a fetch delay. Three rounds, less read time each round.
+// Cache Miss: read the passage, then type it from memory. Hold Tab to peek
+// at the current word, which is a cache miss and costs a fetch delay. A wrong
+// key is also a cache miss: input stalls for the same fetch, then the word
+// shows. Three rounds, less read time each round.
 import { TypingSession, TextView, listenKeys, now } from "../../shared/engine.js";
-import { pickPassage } from "../../shared/content.js";
+import { pickPassage, filterPassages } from "../../shared/content.js";
 import { mountShell, h, render, lessonCard, statsRow, fmt, pct, exposeState } from "../../shared/ui.js";
 
 const SLUG = "cache-miss";
 const ROUNDS = [1, 0.6, 0.3]; // share of full read time per round
 const FETCH_MS = 400; // latency before a peeked word appears
-const PICK = { minLen: 50, maxLen: 200 };
+// Short passages fit in memory. Widen the range if the library is small.
+const PICK = filterPassages({ minLen: 50, maxLen: 160 }).length >= 5 ? { minLen: 50, maxLen: 160 } : { minLen: 50, maxLen: 200 };
 const readMsFor = (text) => 4000 + 90 * text.length;
 
 const main = mountShell({ title: "Cache Miss", tagline: "Keep the lesson in memory." });
 
 let passage = pickPassage(PICK);
-let phase = "read"; // read | recall | between | done
+let phase = "ready"; // ready | read | recall | between | done
 let round = 0;
 let results = []; // per round {keyMisses, peeks, missed: Set of word indexes, ms, pos}
 let wordMiss = []; // per word index, totals across rounds
 let session, view, words, ui, readEnd, readTimer, cur, peek;
+let fetch = null; // {wi, shown, timer}: the word a wrong key is fetching
 
 exposeState(SLUG, () => ({
   phase, round: round + 1, passageId: passage.id, text: passage.text,
@@ -26,6 +29,7 @@ exposeState(SLUG, () => ({
   keyMisses: cur?.keyMisses ?? 0, peeks: cur?.peeks ?? 0, missedWords: cur?.missed.size ?? 0,
   hitRate: cur ? +hitRate(cur).toFixed(3) : null,
   peeking: !!peek, peekShown: !!peek?.shown,
+  fetching: !!fetch && !fetch.shown, revealed: fetch?.shown ? fetch.wi : null,
   readLeftMs: phase === "read" ? Math.max(0, Math.round(readEnd - now())) : 0,
   rounds: results.map((r) => +hitRate(r).toFixed(3)),
 }));
@@ -49,7 +53,24 @@ function startGame() {
   results = [];
   words = new TypingSession(passage.text).words();
   wordMiss = words.map(() => 0);
-  startRead();
+  showReady();
+}
+
+// The read timer only starts when you ask for it.
+function showReady() {
+  phase = "ready";
+  clearInterval(readTimer);
+  const total = readMsFor(passage.text) * ROUNDS[0];
+  render(main,
+    h("div", { class: "panel stack" },
+      roundHead("Read the passage, then type it from memory."),
+      h("p", { class: "cx-p cx-ready" }, `You get ${fmt(total / 1000)}s to read. Each round after that gives you less time.`),
+      h("div", { class: "row" },
+        h("button", { class: "primary", onclick: startRead }, "Start reading"),
+        h("span", { class: "muted" }, "or press ", h("kbd", {}, "Space")),
+      ),
+    ),
+  );
 }
 
 function startRead() {
@@ -91,13 +112,15 @@ function startRecall() {
   session = new TypingSession(passage.text, { blockOnError: true });
   cur = { keyMisses: 0, peeks: 0, missed: new Set(), ms: 0, start: null, pos: 0 };
   peek = null;
+  clearFetch();
   ui = {
     box: h("div", { class: "cx-recall" }),
     rate: h("span", { class: "cx-rate" }),
     counts: h("span", { class: "muted cx-counts" }),
-    fetch: h("span", { class: "cx-fetch hidden" }, h("span", { class: "cx-dot" }), "fetching from memory..."),
+    fetchMsg: h("span", {}),
     progress: h("div", { class: "cx-prog-fill" }),
   };
+  ui.fetch = h("span", { class: "cx-fetch hidden" }, h("span", { class: "cx-dot" }), ui.fetchMsg);
   render(main,
     h("div", { class: "panel stack" },
       roundHead("Now type it from memory."),
@@ -107,7 +130,7 @@ function startRecall() {
       ),
       h("div", { class: "cx-prog" }, ui.progress),
       ui.box,
-      h("div", { class: "hint" }, "A word is a hit if you type it with no wrong key and no peek. Wrong keys are rejected. Hold ", h("kbd", {}, "Tab"), " to peek at the current word. Peeking is a cache miss, and the fetch takes a moment."),
+      h("div", { class: "hint" }, "A word is a hit if you type it with no wrong key and no peek. Hold ", h("kbd", {}, "Tab"), " to peek at the current word. A peek is a cache miss. So is a wrong key. Both wait for a fetch before the word shows."),
     ),
   );
   view = new TextView(ui.box, passage.text);
@@ -122,39 +145,64 @@ function wordAtPos() {
 
 function paint() {
   const pos = session.pos;
-  const pw = peek?.shown ? words[peek.wi] : null;
+  const shown = [peek?.shown ? words[peek.wi] : null, fetch?.shown ? words[fetch.wi] : null].filter(Boolean);
   view.spans.forEach((s, i) => {
+    const vis = i >= pos && shown.some((w) => i >= w.start && i < w.end);
     s.classList.toggle("ok", i < pos);
     s.classList.toggle("cur", i === pos && !session.done);
-    s.classList.toggle("cx-hide", i >= pos && !(pw && i >= pw.start && i < pw.end));
-    s.classList.toggle("cx-peek", i >= pos && !!pw && i >= pw.start && i < pw.end);
+    s.classList.toggle("cx-hide", i >= pos && !vis);
+    s.classList.toggle("cx-peek", vis);
   });
   cur.pos = pos;
   const n = lookups(cur);
-  ui.rate.textContent = pct(hitRate(cur));
-  ui.counts.textContent = `${n - cur.missed.size} of ${n} words from memory . ${plural(cur.keyMisses, "wrong key")} . ${plural(cur.peeks, "peek")}`;
+  ui.rate.textContent = n ? pct(hitRate(cur)) : "-";
+  ui.rate.classList.toggle("cx-rate-none", !n);
+  ui.counts.textContent = `${n ? `${n - cur.missed.size} of ${n} words from memory` : "No words done yet"} . ${plural(cur.keyMisses, "wrong key")} . ${plural(cur.peeks, "peek")}`;
   ui.progress.style.width = `${(pos / passage.text.length) * 100}%`;
-  ui.fetch.classList.toggle("hidden", !(peek && !peek.shown));
+  const missFetch = fetch && !fetch.shown;
+  ui.fetch.classList.toggle("hidden", !(missFetch || (peek && !peek.shown)));
+  ui.fetchMsg.textContent = missFetch ? "cache miss. fetching..." : "fetching from memory...";
 }
 
 function onChar(key) {
+  if (fetch && !fetch.shown) return; // stalled on a fetch
   if (cur.start == null) cur.start = now();
   const r = session.input(key);
   if (r.kind === "blocked") {
     cur.keyMisses++;
-    const wi = words.findIndex((w) => r.index >= w.start && r.index <= w.end);
-    if (wi >= 0) { wordMiss[wi]++; cur.missed.add(wi); }
     const s = view.spans[r.index];
     s.classList.remove("cx-miss");
     void s.offsetWidth;
     s.classList.add("cx-miss");
+    const wi = wordAtPos();
+    if (wi >= 0) {
+      wordMiss[wi]++;
+      cur.missed.add(wi);
+      // A wrong key is a cache miss: stall for the fetch, then show the word.
+      const visible = (fetch?.wi === wi) || (peek?.shown && peek.wi === wi);
+      if (!visible) startFetch(wi);
+    }
   }
+  if (fetch && fetch.shown && wordAtPos() !== fetch.wi) clearFetch();
   if (peek) followPeek();
   paint();
   if (session.done) endRound();
 }
 
+function startFetch(wi) {
+  clearFetch();
+  const f = { wi, shown: false, timer: 0 };
+  f.timer = setTimeout(() => { if (fetch === f) { f.shown = true; if (phase === "recall") paint(); } }, FETCH_MS);
+  fetch = f;
+}
+
+function clearFetch() {
+  if (fetch) clearTimeout(fetch.timer);
+  fetch = null;
+}
+
 // Peeking: one cache miss per word revealed, each with a fetch delay.
+// The miss counts when the word actually shows, so a quick tap is free.
 function peekDown() {
   if (peek || session.done) return;
   peek = { wi: -1, shown: false, timer: 0 };
@@ -165,13 +213,19 @@ function followPeek() {
   const wi = wordAtPos();
   if (wi < 0 || wi === peek.wi) return;
   peek.wi = wi;
-  peek.shown = false;
-  cur.peeks++;
-  wordMiss[wi]++;
-  cur.missed.add(wi);
   clearTimeout(peek.timer);
+  // Already fetched after a wrong key: no second miss.
+  if (fetch?.shown && fetch.wi === wi) { peek.shown = true; paint(); return; }
+  peek.shown = false;
   const p = peek;
-  p.timer = setTimeout(() => { if (peek === p) { p.shown = true; paint(); } }, FETCH_MS);
+  p.timer = setTimeout(() => {
+    if (peek !== p) return;
+    p.shown = true;
+    cur.peeks++;
+    wordMiss[wi]++;
+    cur.missed.add(wi);
+    paint();
+  }, FETCH_MS);
   paint();
 }
 
@@ -184,6 +238,7 @@ function peekUp() {
 
 function endRound() {
   peekUp();
+  clearFetch();
   cur.ms = now() - (cur.start ?? now());
   cur.pos = passage.text.length;
   results.push(cur);
@@ -203,7 +258,7 @@ function endRound() {
       h("p", { class: "cx-p" }, `Next round you get ${pct(next)} of the read time. Same passage.`),
       h("div", { class: "row" },
         h("button", { class: "primary", onclick: nextRound }, `Start round ${round + 2}`),
-        h("span", { class: "muted" }, h("kbd", {}, "Enter"), " continue"),
+        h("span", { class: "muted" }, h("kbd", {}, "Space"), " or ", h("kbd", {}, "Enter"), " continue"),
       ),
     ),
   );
@@ -278,8 +333,10 @@ function nextPassage() {
 }
 
 listenKeys((key, e) => {
-  if (phase === "read") { if (key === " " || key === "Enter") startRecall(); return; }
-  if (phase === "between") { if (key === "Enter") nextRound(); return; }
+  const go = (key === " " || key === "Enter") && !e.repeat;
+  if (phase === "ready") { if (go) startRead(); return; }
+  if (phase === "read") { if (go) startRecall(); return; }
+  if (phase === "between") { if (go) nextRound(); return; }
   if (phase === "done") {
     if (key === "Enter") startGame();
     else if (key === "Escape") nextPassage();

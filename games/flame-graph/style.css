@@ -1,12 +1,16 @@
 .fg-pick .fg-word { color: var(--text); cursor: pointer; border-radius: 4px; padding: 0 2px; }
 .fg-pick .fg-word:hover { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+.fg-pick .fg-word.fg-hl { background: color-mix(in srgb, var(--accent) 45%, transparent); outline: 2px solid var(--accent); }
+.fg-pick .fg-short { color: var(--faint); padding: 0 2px; }
 .typing .ch.fg-guess { text-decoration: underline dotted var(--accent); text-underline-offset: 6px; }
+.fg-note:empty { display: none; }
+.fg-note { color: var(--bad); margin-top: 0; }
 
 .fg-graph { display: flex; flex-direction: column; gap: 2px; }
-.fg-row { display: flex; gap: 2px; min-height: 30px; }
+.fg-row { display: flex; gap: 1px; min-height: 30px; overflow: hidden; }
 .fg-box {
   flex-basis: 0;
-  min-width: 3px;
+  min-width: 1px;
   border-radius: 3px;
   overflow: hidden;
   color: #1a1206;
@@ -14,10 +18,11 @@
   font-size: 0.75rem;
   display: flex;
   align-items: center;
-  padding: 0 4px;
   white-space: nowrap;
 }
-.fg-box span { overflow: hidden; text-overflow: ellipsis; }
+.fg-box span { min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+.fg-words .fg-box span { flex: none; overflow: visible; }
+.fg-box span:empty { padding: 0; }
 .fg-box.fg-top { outline: 2px solid var(--text); outline-offset: -2px; font-weight: 700; }
 .fg-box.fg-guessed { box-shadow: inset 0 -4px 0 var(--accent); }
 .fg-hot { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -26,3 +31,7 @@
 .fg-table { border-collapse: collapse; font-family: var(--mono); width: 100%; }
 .fg-table th, .fg-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
 .fg-table th { color: var(--muted); font-weight: 500; font-size: 0.8rem; text-transform: uppercase; }
+.fg-table .fg-rest td { color: var(--muted); }
+@media (max-width: 600px) {
+  .fg-table th, .fg-table td { padding: 6px 5px; font-size: 0.85rem; }
+}

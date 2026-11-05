@@ -12,6 +12,7 @@ const BASE = 20;
 const EARLY = 100;
 const ACC_BONUS = 30;
 const ACC_BAR = 0.95;
+const LOOKAHEAD = 3; // words visible past the current one
 
 const rand = rng(getSeed());
 const keyOf = (p) => (p.name || p.handle || "").toLowerCase();
@@ -22,7 +23,8 @@ const AUTHORS = new Map();
 for (const p of PASSAGES) if (!AUTHORS.has(keyOf(p))) AUTHORS.set(keyOf(p), p);
 
 let phase = "type"; // type | blame | reveal | final
-let rounds = []; // {passage, choices, guess, guessAt, correct, guessPts, accPts, wpm, acc}
+// guess is 1..4 for a choice, 0 for "don't know", null before guessing.
+let rounds = []; // {passage, choices, guess, guessAt, correct, passed, guessPts, accPts, wpm, acc}
 let ri = 0;
 let session = null;
 let view = null;
@@ -34,13 +36,15 @@ exposeState("git-blame", () => {
     phase, round: ri + 1, rounds: rounds.length,
     passageId: r?.passage.id,
     text: r?.passage.text,
-    pos: session?.pos, done: session?.done,
+    pos: session?.pos, done: session?.done, full: session?.full,
+    visibleEnd: session ? visibleEnd() : null,
     choices: r?.choices.map(nameOf),
     answer: r ? r.choices.findIndex((c) => keyOf(c) === keyOf(r.passage)) + 1 : null,
     guess: r?.guess ?? null,
     forced: !!r?.forced,
+    passed: !!r?.passed,
     score: total(),
-    history: rounds.slice(0, phase === "final" ? rounds.length : ri).map((x) => ({ id: x.passage.id, correct: x.correct, points: x.guessPts + x.accPts })),
+    history: rounds.slice(0, phase === "final" ? rounds.length : ri).map((x) => ({ id: x.passage.id, correct: x.correct, passed: !!x.passed, points: x.guessPts + x.accPts })),
   };
 });
 
@@ -65,6 +69,17 @@ function pickRounds() {
 
 function remaining() { return 1 - session.pos / session.text.length; }
 function guessValue() { return Math.round(BASE + EARLY * remaining()); }
+const blamedName = (r) => (r.passed ? "don't know" : nameOf(r.choices[r.guess - 1]));
+
+// The quote is hidden past the current word plus LOOKAHEAD more words, so an
+// early guess really is a guess on less text. Returns the first hidden index.
+function visibleEnd() {
+  const words = session.words();
+  const k = words.findIndex((w) => w.end > session.pos);
+  if (k < 0) return session.text.length;
+  const last = words[Math.min(k + LOOKAHEAD, words.length - 1)];
+  return last.end;
+}
 
 // ---------- round ----------
 function startGame() {
@@ -89,7 +104,7 @@ function startRound() {
       ),
       h("div", { class: "gb-blame" },
         h("span", { class: "gb-sha" }, sha(r.passage)),
-        " (", h("span", { class: "gb-who" }, "?".repeat(12)), ") ",
+        " (", els.who = h("span", { class: "gb-who" }, "?".repeat(12)), ") ",
         h("span", { class: "muted" }, "quote.txt"),
       ),
       els.box,
@@ -111,12 +126,16 @@ function sha(p) {
 function paint() {
   const r = rounds[ri];
   view.paint(session);
+  const end = visibleEnd();
+  view.spans.forEach((s, i) => s.classList.toggle("gb-hid", i >= end));
   if (r.guess == null) {
     const v = guessValue();
     render(els.meter,
       h("div", { class: "gb-bar" }, h("div", { style: { width: `${remaining() * 100}%` } })),
       h("span", {}, "Guess now for ", h("b", {}, `+${v}`), " if right."),
     );
+  } else if (r.passed) {
+    render(els.meter, h("span", {}, "It is ", h("b", {}, nameOf(r.passage)), ". Finish typing for the lesson."));
   } else {
     render(els.meter, h("span", {}, "You blamed ", h("b", {}, nameOf(r.choices[r.guess - 1])), `. Finish typing to find out.`));
   }
@@ -128,24 +147,33 @@ function paint() {
         h("kbd", {}, String(i + 1)), " ", nameOf(c),
         c.name && c.handle ? h("span", { class: "muted" }, ` ${c.handle}`) : null,
       )),
+      h("button", { class: "gb-choice gb-pass", onclick: () => lockGuess(0) },
+        h("kbd", {}, "0"), " Don't know", h("span", { class: "muted" }, " shows the author, 0 points"),
+      ),
     );
   }
   render(els.foot,
-    phase === "blame"
-      ? h("span", {}, "Press ", h("kbd", {}, "1"), " to ", h("kbd", {}, "4"), " to blame.", r.forced ? "" : [" ", h("kbd", {}, "Tab"), " or ", h("kbd", {}, "Esc"), " to keep typing."])
+    session.full
+      ? h("span", { class: "gb-bad" }, "Fix the red characters to finish.")
+      : phase === "blame"
+      ? h("span", {}, "Press ", h("kbd", {}, "1"), " to ", h("kbd", {}, "4"), " to blame, or ", h("kbd", {}, "0"), " if you don't know.", r.forced ? "" : [" ", h("kbd", {}, "Tab"), " or ", h("kbd", {}, "Esc"), " to keep typing."])
       : r.guess == null
         ? h("span", {}, "Press ", h("kbd", {}, "Tab"), " to run git blame. You can guess any time. Earlier is worth more.")
-        : h("span", {}, "Guess locked. Typing well adds a bonus."),
+        : r.passed
+          ? h("span", {}, "No guess points this round.")
+          : h("span", {}, `Guess locked. If you are right, ${pct(ACC_BAR)} accuracy or better adds +${ACC_BONUS}.`),
   );
 }
 
 function lockGuess(n) {
   const r = rounds[ri];
-  if (phase !== "blame" || n < 1 || n > r.choices.length) return;
+  if (phase !== "blame" || n < 0 || n > r.choices.length) return;
   r.guess = n;
   r.guessAt = 1 - remaining();
-  r.correct = keyOf(r.choices[n - 1]) === keyOf(r.passage);
+  r.passed = n === 0;
+  r.correct = !r.passed && keyOf(r.choices[n - 1]) === keyOf(r.passage);
   r.guessPts = r.correct ? guessValue() : 0;
+  if (r.passed) { els.who.textContent = nameOf(r.passage); els.who.classList.add("gb-shown"); }
   if (session.done) return reveal();
   phase = "type";
   paint();
@@ -154,7 +182,7 @@ function lockGuess(n) {
 function onTypeKey(key) {
   const r = rounds[ri];
   if (phase === "blame") {
-    if (/^[1-9]$/.test(key)) lockGuess(Number(key));
+    if (/^[0-9]$/.test(key)) lockGuess(Number(key));
     else if ((key === "Tab" || key === "Escape") && !r.forced) { phase = "type"; paint(); }
     return;
   }
@@ -174,8 +202,7 @@ function reveal() {
   const r = rounds[ri];
   r.acc = session.accuracy();
   r.wpm = session.wpm();
-  r.accPts = r.acc >= ACC_BAR ? ACC_BONUS : 0;
-  const guessed = r.choices[r.guess - 1];
+  r.accPts = r.correct && r.acc >= ACC_BAR ? ACC_BONUS : 0;
   const last = ri === rounds.length - 1;
   render(main,
     h("div", { class: "panel stack" },
@@ -185,7 +212,7 @@ function reveal() {
       ),
       h("div", { class: "gb-blame" },
         h("span", { class: "gb-sha" }, sha(r.passage)),
-        " (", h("span", { class: r.correct ? "gb-good" : "gb-bad" }, nameOf(r.passage)), ") ",
+        " (", h("span", { class: r.correct ? "gb-good" : r.passed ? "" : "gb-bad" }, nameOf(r.passage)), ") ",
         h("span", { class: "muted" }, "quote.txt"),
       ),
       h("div", { class: "gb-verdict" },
@@ -193,7 +220,9 @@ function reveal() {
           ? [h("b", { class: "gb-good" }, "Right. "), r.forced
             ? "You got it at the end. Guess while you type for more points."
             : `You knew it with ${pct(1 - r.guessAt)} of the passage left.`]
-          : [h("b", { class: "gb-bad" }, "Wrong. "), `You blamed ${nameOf(guessed)}. It was ${nameOf(r.passage)}.`],
+          : r.passed
+            ? [h("b", {}, "Passed. "), `It was ${nameOf(r.passage)}.`]
+            : [h("b", { class: "gb-bad" }, "Wrong. "), `You blamed ${blamedName(r)}. It was ${nameOf(r.passage)}.`],
       ),
       statsRow([
         ["guess", `+${r.guessPts}`],
@@ -242,7 +271,7 @@ function showFinal() {
           rounds.map((r, i) => h("tr", {},
             h("td", {}, String(i + 1)),
             h("td", {}, nameOf(r.passage)),
-            h("td", { class: r.correct ? "gb-good" : "gb-bad" }, nameOf(r.choices[r.guess - 1])),
+            h("td", { class: r.correct ? "gb-good" : r.passed ? "muted" : "gb-bad" }, blamedName(r)),
             h("td", {}, r.forced ? "end" : `${pct(r.guessAt)} typed`),
             h("td", {}, fmt(r.wpm)),
             h("td", {}, String(r.guessPts + r.accPts)),

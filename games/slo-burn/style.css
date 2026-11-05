@@ -65,3 +65,5 @@
   .sb-table th, .sb-table td { padding: 6px 4px; }
   .typing { font-size: 1.15rem; }
 }
+.sb-flight.reading { border-color: var(--accent); }
+.sb-flight.reading .v { color: var(--accent-2); }

@@ -40,8 +40,9 @@
     ));
     addEventListener("keydown", (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!/^[0-9]$/.test(e.key)) return;
       const n = Number(e.key);
-      if (e.key.length === 1 && Number.isInteger(n)) {
+      {
         const g = GAMES[(n + 9) % 10];
         if (g) location.href = `games/${g.slug}/index.html`;
       }

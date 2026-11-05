@@ -20,6 +20,10 @@
 .td-prompt-foot { font-size: 0.82rem; margin-top: 4px; }
 .td-pay-text { font-size: 1.25rem; line-height: 1.7; }
 .td-pay-text .ch { color: var(--muted); }
+.td-pay-text.td-wait { opacity: 0.35; }
+.td-switch { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: 0.85rem; color: var(--warn); margin-bottom: 4px; }
+.td-switch-track { width: 80px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--warn) 20%, transparent); overflow: hidden; }
+.td-switch-fill { display: block; height: 100%; background: var(--warn); }
 .td-shake { animation: td-shake 0.25s; }
 @keyframes td-shake { 25% { transform: translateX(-4px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
 @keyframes td-in { from { opacity: 0; transform: translateY(-4px); } }
@@ -40,8 +44,8 @@
 .td-item { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
 .td-word { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bad); }
 .td-oldest .td-word::before { content: "> "; color: var(--accent-2); }
-.td-copies { color: var(--warn); }
-.td-owe { color: var(--muted); min-width: 3.5em; text-align: right; }
+.td-mult { color: var(--warn); font-weight: 700; }
+.td-copies { color: var(--muted); min-width: 5.5em; text-align: right; }
 .td-paidrow, .td-empty { font-size: 0.8rem; border-bottom: none; }
 
 /* End screen chart */

@@ -10,6 +10,7 @@
 /* Recall phase */
 .cx-bar { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-height: 28px; }
 .cx-rate { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; color: var(--good); }
+.cx-rate.cx-rate-none { color: var(--muted); }
 .cx-counts { font-family: var(--mono); font-size: 0.82rem; }
 .cx-spacer { flex: 1; }
 .cx-fetch {
@@ -51,4 +52,5 @@
 .cx-hw { border-radius: 4px; padding: 1px 2px; }
 .cx-hw-miss { color: var(--text); }
 .cx-p { margin-bottom: 0; }
+.cx-p.cx-ready { margin: 0; }
 .cx-top { gap: 6px; }

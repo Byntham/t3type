@@ -50,7 +50,10 @@ exposeState("context-switch", () => {
     lostMs: g ? Math.round(lostMs(g)) : 0,
     steadyMs: g ? Math.round(steadyMean(g) ?? 0) : null,
     nextInterruptIn: g?.nextAt != null ? Math.round(g.nextAt - now()) : null,
-    switches: g ? g.switches.map((s) => ({ kind: s.kind, to: LABELS[s.to], keys: s.keys.length, cost: Math.round(switchCost(g, s).cost) })) : [],
+    switches: g ? g.switches.map((s) => {
+      const c = switchCost(g, s).cost;
+      return { kind: s.kind, to: LABELS[s.to], keys: s.keys.length, cost: c == null ? null : Math.round(c) };
+    }) : [],
   };
 });
 
@@ -61,16 +64,18 @@ function steadyMean(g) {
 }
 // Warm-up cost: time to get WARM keys in after the switch, minus what those
 // keys would take at steady pace. The switch moment counts as the start, so
-// the pause to reorient is part of the cost.
+// the pause to reorient is part of the cost. A switch with no keys typed
+// (the player was switched away again first) or no steady pace yet is not
+// measured: cost is null and it stays out of totals and averages.
 function switchCost(g, s) {
   const st = steadyMean(g);
-  if (!s.keys.length || st == null) return { warm: 0, expected: 0, cost: 0 };
+  if (!s.keys.length || st == null) return { warm: 0, expected: 0, cost: null };
   const warm = s.keys.at(-1) - s.at;
   const expected = s.keys.length * st;
   return { warm, expected, cost: Math.max(0, warm - expected) };
 }
 function lostMs(g) {
-  return g.switches.filter((s) => s.kind === "interrupt").reduce((a, s) => a + switchCost(g, s).cost, 0);
+  return g.switches.filter((s) => s.kind === "interrupt").reduce((a, s) => a + (switchCost(g, s).cost ?? 0), 0);
 }
 
 // ---------- intro ----------
@@ -122,16 +127,18 @@ function startWork() {
   ui.toasts = h("div", { class: "cs-toasts", "aria-live": "polite" });
   ui.panels = game.tasks.map((t, i) => {
     const text = h("div", {});
+    const pings = h("div", { class: "cs-task-pings", "aria-live": "polite" });
     const pill = h("span", { class: "pill" });
     const prog = h("span", { class: "muted cs-prog" });
     const warm = h("div", { class: "cs-warm" });
     const el = h("section", { class: "panel cs-task" },
       h("div", { class: "cs-task-head" }, h("b", {}, `Task ${LABELS[i]}`), pill, prog),
+      pings,
       warm,
       text,
     );
     t.view = new TextView(text, t.passage.text);
-    return { el, pill, prog, warm };
+    return { el, pill, prog, warm, pings };
   });
   const stat = (v, l) => h("div", { class: "stat" }, v, h("div", { class: "l" }, l));
   render(main,
@@ -190,6 +197,10 @@ function switchTo(to, kind, t) {
   try { el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch { /* old browsers */ }
 }
 
+// Wide screens show pings in a corner stack. When the tasks stack (narrow
+// screens) a fixed toast would cover the HUD, so the ping goes inside the
+// task card it points to.
+const narrow = window.matchMedia("(max-width: 700px)");
 function toast(sw) {
   const el = h("div", { class: "cs-toast" },
     h("div", { class: "cs-avatar" }, sw.who[0]),
@@ -198,7 +209,7 @@ function toast(sw) {
       h("div", {}, sw.msg),
     ),
   );
-  ui.toasts.appendChild(el);
+  (narrow.matches ? ui.panels[sw.to].pings : ui.toasts).appendChild(el);
   setTimeout(() => el.classList.add("out"), 3200);
   setTimeout(() => el.remove(), 3700);
 }
@@ -263,15 +274,19 @@ function showReport() {
   const lost = lostMs(g);
   const st = steadyMean(g) ?? total / Math.max(1, g.tasks.reduce((a, t) => a + t.passage.text.length, 0));
   const ints = g.switches.filter((s) => s.kind === "interrupt");
-  const warmKeys = ints.reduce((a, s) => a + s.keys.length, 0);
-  const warmTime = ints.reduce((a, s) => a + (s.keys.length ? s.keys.at(-1) - s.at : 0), 0);
-  const rows = g.switches.filter((s) => s.kind !== "start" && s.keys.length);
-  const maxMs = Math.max(1, ...rows.map((s) => s.keys.at(-1) - s.at));
+  const measured = ints.filter((s) => switchCost(g, s).cost != null);
+  const unmeasured = ints.length - measured.length;
+  const warmKeys = measured.reduce((a, s) => a + s.keys.length, 0);
+  const warmTime = measured.reduce((a, s) => a + (s.keys.at(-1) - s.at), 0);
+  const rows = g.switches.filter((s) => s.kind === "interrupt" || (s.kind === "handoff" && s.keys.length));
+  const maxMs = Math.max(1, ...rows.filter((s) => s.keys.length).map((s) => s.keys.at(-1) - s.at));
   const handoff = rows.find((s) => s.kind === "handoff");
+  const handoffCost = handoff ? switchCost(g, handoff).cost : null;
 
-  const head = ints.length
-    ? `${ints.length} interrupt${ints.length === 1 ? "" : "s"} cost you ${fmt(lost / 1000, 1)}s.`
-    : "No interrupts landed this time.";
+  const plural = (k, word) => `${k} ${word}${k === 1 ? "" : "s"}`;
+  const head = !ints.length ? "No interrupts landed this time."
+    : !unmeasured ? `${plural(ints.length, "interrupt")} cost you ${fmt(lost / 1000, 1)}s.`
+    : `${plural(ints.length, "interrupt")}. The ${measured.length} we could measure cost you ${fmt(lost / 1000, 1)}s.`;
   let n = 0;
   render(main,
     h("div", { class: "panel stack cs-report" },
@@ -280,26 +295,36 @@ function showReport() {
         h("div", { class: "muted" }, "lost to context switching"),
       ),
       h("div", { class: "cs-finding" },
-        h("p", {}, h("b", {}, head), ` You finished both tasks in ${fmt(total / 1000, 1)}s. With zero interrupts you would have finished in about ${fmt((total - lost) / 1000, 1)}s.`),
-        ints.length ? h("p", {}, `At your steady pace a key took ${fmt(st)} ms. In the first ${WARM} keys after a ping, it took ${fmt(warmKeys ? warmTime / warmKeys : 0)} ms. That warm-up is reloading the task into your head.`) : null,
-        handoff ? h("p", { class: "muted" }, `Even the planned handoff from A to B cost ${fmt(switchCost(g, handoff).cost / 1000, 2)}s. You pay that once no matter what. Interrupts make you pay it again and again.`) : null,
+        h("p", {}, h("b", {}, head), ` You finished both tasks in ${fmt(total / 1000, 1)}s. We estimate about ${fmt((total - lost) / 1000, 1)}s with zero interrupts. The estimate uses your steady pace.`),
+        warmKeys ? h("p", {}, `At your steady pace a key took ${fmt(st)} ms. In the first ${WARM} keys after a ping, it took ${fmt(warmTime / warmKeys)} ms. That warm-up is reloading the task into your head.`) : null,
+        unmeasured ? h("p", { class: "muted" }, `${plural(unmeasured, "switch")} could not be measured. You were switched away before you typed a key. ${unmeasured === 1 ? "It is" : "They are"} left out of the totals.`) : null,
+        handoffCost != null && handoffCost >= 100 ? h("p", { class: "muted" }, `Even the planned handoff from A to B cost ${fmt(handoffCost / 1000, 2)}s. You pay that once no matter what. Interrupts make you pay it again and again.`) : null,
       ),
       statsRow([
         ["total", `${fmt(total / 1000, 1)}s`],
         ["no-interrupt est.", `${fmt((total - lost) / 1000, 1)}s`],
         ["interrupts", ints.length],
+        unmeasured ? ["not measured", unmeasured] : null,
         ["steady wpm", fmt(wpm(1, st))],
         ["warm-up wpm", warmKeys ? fmt(wpm(warmKeys, warmTime)) : "-"],
         ["typos", g.typos],
-      ]),
+      ].filter(Boolean)),
       h("h3", {}, "Cost of each switch"),
       rows.length ? h("div", { class: "cs-switches" },
         rows.map((s) => {
           const c = switchCost(g, s);
-          const warmMs = s.keys.at(-1) - s.at;
           const label = s.kind === "interrupt" ? `#${++n} to ${LABELS[s.to]}` : `handoff to ${LABELS[s.to]}`;
+          const labelEl = h("div", { class: "cs-sw-label" }, h("b", {}, label), h("span", { class: "muted" }, ` at ${fmt((s.at - g.startedAt) / 1000, 1)}s`));
+          if (c.cost == null) {
+            return h("div", { class: "cs-sw unmeasured" },
+              labelEl,
+              h("div", { class: "cs-sw-track cs-sw-none" }, s.keys.length ? "no steady pace yet" : "switched away before a key"),
+              h("div", { class: "cs-sw-val muted" }, "not measured"),
+            );
+          }
+          const warmMs = s.keys.at(-1) - s.at;
           return h("div", { class: "cs-sw" + (s.kind === "handoff" ? " handoff" : "") },
-            h("div", { class: "cs-sw-label" }, h("b", {}, label), h("span", { class: "muted" }, ` at ${fmt((s.at - g.startedAt) / 1000, 1)}s`)),
+            labelEl,
             h("div", { class: "cs-sw-track", title: `${s.keys.length} keys in ${fmt(warmMs)} ms. Steady pace would take ${fmt(c.expected)} ms.` },
               h("div", { class: "cs-sw-base", style: { width: `${(Math.min(c.expected, warmMs) / maxMs) * 100}%` } }),
               h("div", { class: "cs-sw-cost", style: { width: `${(c.cost / maxMs) * 100}%` } }),

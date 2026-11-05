@@ -45,8 +45,10 @@ export class TypingSession {
 
   get pos() { return this.typed.length; }
   get done() { return this.endedAt != null; }
+  // True when every character is typed but some are wrong.
+  get full() { return !this.done && this.pos >= this.text.length; }
 
-  // Returns {kind: "ok" | "err" | "back" | "blocked" | "ignored", index}
+  // Returns {kind: "ok" | "err" | "back" | "blocked" | "full" | "ignored", index}
   input(key) {
     if (this.done) return { kind: "ignored" };
     const t = now();
@@ -63,6 +65,8 @@ export class TypingSession {
       return { kind: "back", index: this.pos };
     }
     if (key.length !== 1) return { kind: "ignored" };
+    // Passage is full but has typos: the player must backspace and fix them.
+    if (this.pos >= this.text.length) return { kind: "full" };
     if (this.startedAt == null) this.startedAt = t;
     const index = this.pos;
     const ok = this.text[index] === key;

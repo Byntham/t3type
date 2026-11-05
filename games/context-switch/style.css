@@ -47,19 +47,26 @@
 }
 .cs-now { font-size: 0.8rem; }
 
+/* Narrow screens: pings show inside the task card instead of a fixed corner toast */
+.cs-task-pings { display: flex; flex-direction: column; gap: 6px; }
+.cs-task-pings:empty { display: none; }
+.cs-task-pings .cs-toast { box-shadow: none; margin-bottom: 6px; background: var(--panel-2); }
+.cs-task-pings .cs-toast.out { transform: none; }
+
 /* Report */
 .cs-report h3 { margin: 22px 0 0; font-size: 1rem; }
 .cs-finding { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
 .cs-finding p { margin: 0; }
 .cs-finding p + p { margin-top: 6px; }
 .cs-switches { display: flex; flex-direction: column; gap: 8px; }
-.cs-sw { display: grid; grid-template-columns: 150px 1fr 80px; gap: 10px; align-items: center; }
+.cs-sw { display: grid; grid-template-columns: 150px 1fr 100px; gap: 10px; align-items: center; }
 .cs-sw-label { font-size: 0.9rem; white-space: nowrap; }
 .cs-sw-track { display: flex; height: 18px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
 .cs-sw-base { background: var(--faint); }
 .cs-sw-cost { background: var(--bad); }
-.cs-sw-val { font-family: var(--mono); font-size: 0.85rem; text-align: right; }
+.cs-sw-val { font-family: var(--mono); font-size: 0.85rem; text-align: right; white-space: nowrap; }
 .cs-sw.handoff { opacity: 0.6; }
+.cs-sw-none { align-items: center; padding: 0 8px; font-size: 0.75rem; color: var(--muted); border: 1px dashed var(--line); background: none; }
 .cs-sw.handoff .cs-sw-cost { background: var(--warn); }
 .cs-caption { font-size: 0.82rem; display: flex; flex-wrap: wrap; gap: 2px 14px; }
 .cs-legend { white-space: nowrap; }
@@ -70,6 +77,6 @@
 
 @media (max-width: 700px) {
   .cs-tasks, .cs-preview { grid-template-columns: 1fr; }
-  .cs-sw { grid-template-columns: 1fr 70px; }
+  .cs-sw { grid-template-columns: 1fr 96px; }
   .cs-sw-label { grid-column: 1 / -1; }
 }

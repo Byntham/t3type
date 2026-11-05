@@ -16,11 +16,13 @@ let passage = pickPassage(PICK);
 let seed = getSeed();
 let phase = "type"; // type | ci | revert | done
 let text, pos, committed, commits, entries, reverts, lost, startedAt, endedAt, typedKeys, timer;
+let ciEnd = 0;
+let queue = []; // keys typed while CI runs, replayed in order when it passes
 let view, ui;
 
 exposeState(SLUG, () => ({
   phase, passageId: passage.id, text, pos, committed,
-  commits: commits.length, reverts, lost,
+  commits: commits.length, reverts, lost, queued: queue.length,
   elapsedMs: Math.round(elapsed()), done: phase === "done",
 }));
 
@@ -45,6 +47,7 @@ function start() {
   text = passage.text;
   pos = 0; committed = 0; commits = []; entries = []; reverts = 0; lost = 0;
   startedAt = null; endedAt = null; typedKeys = 0;
+  queue = [];
   phase = "type";
 
   const box = h("div", { class: "cm-text" });
@@ -53,6 +56,7 @@ function start() {
     status: h("div", { class: "cm-status" }),
     clock: h("span", { class: "cm-clock" }, "0.0s"),
     counts: h("span", { class: "muted cm-counts" }),
+    risk: h("div", { class: "cm-risk" }),
     log: h("ol", { class: "cm-log" }),
   };
   render(main,
@@ -60,10 +64,11 @@ function start() {
       h("div", { class: "panel stack cm-main" },
         h("div", { class: "cm-rules muted" },
           "Type the passage. There is no backspace. A typo fails the build and resets you to your last commit. ",
-          "Press ", h("kbd", {}, "Enter"), " at a word boundary to commit. Each commit waits ", `${CI_MS / 1000}s`, " for CI.",
+          "Press ", h("kbd", {}, "Enter"), " at a word boundary to commit. Each commit waits ", `${CI_MS / 1000}s`, " for CI. You can keep typing while CI runs.",
         ),
         h("div", { class: "cm-bar" }, ui.status, h("span", { class: "cm-spacer" }), ui.clock),
         box,
+        ui.risk,
         ui.counts,
       ),
       h("aside", { class: "panel cm-side" },
@@ -77,7 +82,11 @@ function start() {
   paint();
   renderLog();
   clearInterval(timer);
-  timer = setInterval(() => { if (phase !== "done") ui.clock.textContent = `${fmt(elapsed() / 1000, 1)}s`; }, 100);
+  timer = setInterval(() => {
+    if (phase === "done") return;
+    ui.clock.textContent = `${fmt(elapsed() / 1000, 1)}s`;
+    if (phase === "ci") paintCi();
+  }, 50);
 }
 
 function setStatus(kind, msg) {
@@ -85,6 +94,19 @@ function setStatus(kind, msg) {
   render(ui.status,
     kind === "ci" ? h("span", { class: "cm-spin", "aria-hidden": "true" }) : null,
     h("span", {}, msg),
+  );
+}
+
+// CI countdown: a draining bar plus seconds left and how many keys are queued.
+function paintCi() {
+  const left = Math.max(0, ciEnd - now());
+  ui.status.className = "cm-status cm-ci";
+  render(ui.status,
+    h("span", { class: "cm-spin", "aria-hidden": "true" }),
+    h("span", {}, `CI running. ${fmt(left / 1000, 1)}s`),
+    h("span", { class: "cm-ci-track", "aria-hidden": "true" },
+      h("span", { class: "cm-ci-fill", style: { width: `${(1 - left / CI_MS) * 100}%` } })),
+    queue.length ? h("span", { class: "cm-queued" }, `${queue.length} queued`) : null,
   );
 }
 
@@ -96,7 +118,16 @@ function paint() {
     s.classList.toggle("cur", i === pos && phase !== "done");
     s.classList.toggle("cm-mark", marks.has(i));
   });
-  ui.counts.textContent = `${plural(commits.length, "commit")} . ${plural(reverts, "revert")} . ${pos - committed} chars uncommitted`;
+  ui.counts.textContent = `${plural(commits.length, "commit")} . ${plural(reverts, "revert")}`;
+  const risk = pos - committed;
+  ui.risk.className = "cm-risk" + (risk >= 40 ? " cm-risk-high" : risk > 0 ? " cm-risk-some" : "");
+  render(ui.risk,
+    h("span", { class: "cm-risk-v" }, String(risk)),
+    h("span", { class: "cm-risk-l" },
+      phase === "revert" ? `${risk === 1 ? "char" : "chars"} lost to the failed build.`
+      : risk ? `uncommitted ${risk === 1 ? "char" : "chars"}. A typo loses ${risk === 1 ? "it" : "them"}.`
+      : "uncommitted chars. Nothing at risk."),
+  );
 }
 
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
@@ -105,7 +136,7 @@ function renderLog() {
   const items = [...entries].reverse().map((e) =>
     e.kind === "commit"
       ? h("li", { class: "cm-entry" }, h("span", { class: "cm-hash" }, e.hash), h("span", { class: "cm-msg" }, `"${e.text}"`))
-      : h("li", { class: "cm-entry cm-revert" }, h("span", { class: "cm-hash" }, "revert"), h("span", { class: "cm-msg" }, `build failed. lost ${e.lost} chars`)),
+      : h("li", { class: "cm-entry cm-revert" }, h("span", { class: "cm-hash" }, "revert"), h("span", { class: "cm-msg" }, e.lost ? `build failed. lost ${e.lost} chars` : "build failed. nothing lost")),
   );
   items[0]?.classList.add("cm-new");
   if (!items.length) items.push(h("li", { class: "muted cm-empty" }, "No commits yet."));
@@ -139,7 +170,8 @@ function failBuild(key) {
   void ui.box.offsetWidth;
   ui.box.classList.add("cm-shake");
   const want = text[pos] === " " ? "space" : `"${text[pos]}"`;
-  setStatus("fail", `Build failed. Typed "${key === " " ? "space" : key}", expected ${want}. Lost ${loss} chars.`);
+  const typed = key === " " ? "space" : `"${key}"`;
+  setStatus("fail", `Build failed. Typed ${typed}, expected ${want}. ${loss ? `Lost ${loss} ${loss === 1 ? "char" : "chars"}.` : "Nothing was lost."}`);
   setTimeout(() => {
     view.spans.forEach((s) => s.classList.remove("cm-lost", "cm-bad"));
     pos = committed;
@@ -157,14 +189,23 @@ function commit() {
   entries.push({ kind: "commit", hash: fakeHash(chunk, committed), text: chunk.trim() });
   committed = pos;
   phase = "ci";
-  setStatus("ci", "CI running...");
+  ciEnd = now() + CI_MS;
+  paintCi();
   renderLog();
   paint();
   setTimeout(() => {
     if (committed === text.length) { endedAt = now(); finish(); return; }
     phase = "type";
     setStatus("ok", "CI passed.");
+    drain();
   }, CI_MS);
+}
+
+// Replay keys typed during CI. Stops if one of them commits again (the rest
+// wait for that CI run) and drops the rest if one of them fails the build.
+function drain() {
+  while (queue.length && phase === "type") handleKey(queue.shift());
+  if (phase === "revert") queue = [];
 }
 
 // ---------- end ----------
@@ -242,17 +283,24 @@ function nextPassage() {
   start();
 }
 
+function handleKey(key) {
+  if (key === "Backspace" || key === "WordBackspace") { setStatus("warn", "No backspace here. Commit often instead."); return; }
+  if (key === "Enter") { commit(); return; }
+  if (key.length === 1) onChar(key);
+}
+
 listenKeys((key) => {
   if (phase === "done") {
     if (key === "Enter") start();
     else if (key === "Escape") nextPassage();
     return;
   }
-  if (phase === "ci") { setStatus("ci", "CI running. Input blocked."); return; }
+  if (phase === "ci") {
+    if (key === "Enter" || key.length === 1) { queue.push(key); paintCi(); }
+    return;
+  }
   if (phase === "revert") return;
-  if (key === "Backspace" || key === "WordBackspace") { setStatus("warn", "No backspace here. Commit often instead."); return; }
-  if (key === "Enter") { commit(); return; }
-  if (key.length === 1) onChar(key);
+  handleKey(key);
 });
 
 start();

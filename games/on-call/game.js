@@ -2,28 +2,64 @@
 // The mechanic teaches triage: SEV1s fall fastest and cost the most, so
 // they come first even when a SEV3 looks easier.
 import { listenKeys, loop } from "../../shared/engine.js";
-import { PASSAGES, phrases, rng, getSeed, shuffle } from "../../shared/content.js";
+import { PASSAGES, rng, getSeed, shuffle } from "../../shared/content.js";
 import { mountShell, h, render, lessonCard, statsRow, fmt, pct, exposeState } from "../../shared/ui.js";
 
 const main = mountShell({ title: "On-Call", tagline: "Triage first. Then fix." });
 
 const SHIFT_MS = 90_000;
 const LIVES = 3;
+const PENALTY = 5; // points lost per minute of downtime
+// fall: seconds to reach prod at the start of the shift. Slow enough that
+// about 3 incidents in flight is workable at 40 to 50 wpm.
 const SEV = {
-  1: { label: "SEV1", points: 100, fall: 15, downtime: 45 },
-  2: { label: "SEV2", points: 30, fall: 18, downtime: 15 },
-  3: { label: "SEV3", points: 10, fall: 22, downtime: 5 },
+  1: { label: "SEV1", points: 100, fall: 24, downtime: 45 },
+  2: { label: "SEV2", points: 30, fall: 28, downtime: 15 },
+  3: { label: "SEV3", points: 10, fall: 34, downtime: 5 },
 };
+const LATE_SPEEDUP = 0.15; // falls get this much faster by the end of the shift
 
 const rand = rng(getSeed());
 
+// Incidents are whole clauses, so each one reads as a complete thought.
+// Split only at clause punctuation: . ; : ? ! and commas that start a new
+// clause. Drop pieces that are too short, too long, end on a function word,
+// start with a quote, paren or digit, or leave a paren or quote open.
+const MIN_LEN = 12, MAX_LEN = 48;
+const FUNCTION_WORDS = new Set("to the a an of and or but for with in on at is that".split(" "));
+const CLAUSE_START = new Set(("and but so or yet because since while when whenever if unless until although though " +
+  "which who where then otherwise i you we they he she it this that these those there it's you're we're they're i'm don't").split(" "));
+const firstWord = (s) => s.split(/\s/)[0].toLowerCase().replace(/[^a-z']/g, "");
+const lastWord = (s) => s.split(/\s+/).at(-1).toLowerCase().replace(/[^a-z']/g, "");
+const count = (s, re) => (s.match(re) || []).length;
+
+function goodPhrase(s) {
+  if (s.length < MIN_LEN || s.length > MAX_LEN) return false;
+  if (/^["'(\[\d\u201c\u2018]/.test(s)) return false;
+  if (FUNCTION_WORDS.has(lastWord(s))) return false;
+  if (count(s, /\(/g) !== count(s, /\)/g) || count(s, /"/g) % 2) return false;
+  return true;
+}
+
+function incidentPhrases(text) {
+  if (text.length <= MAX_LEN) return goodPhrase(text) ? [text] : [];
+  const out = [];
+  for (const sentence of text.split(/(?<=[.;:?!])\s+/)) {
+    const pieces = [""];
+    sentence.split(/(?<=,)\s+/).forEach((part, k) => {
+      if (k > 0 && CLAUSE_START.has(firstWord(part))) pieces.push(part);
+      else pieces[pieces.length - 1] += (pieces[pieces.length - 1] ? " " : "") + part;
+    });
+    out.push(...pieces);
+  }
+  return out.map((s) => s.trim().replace(/[,;:(-]+$/, "").trim()).filter(goodPhrase);
+}
+
 // Build the incident pool once. Each phrase keeps a link to its passage so
-// the end screen can show the lessons behind what you fixed.
+// you can see the lesson it belongs to.
 const POOL = { 1: [], 2: [], 3: [] };
 for (const p of shuffle(PASSAGES, rand)) {
-  for (let text of phrases(p.text, { maxLen: 40 })) {
-    text = text.replace(/[,;:(]+$/, "").trim();
-    if (text.length < 10) continue;
+  for (const text of incidentPhrases(p.text)) {
     const sev = text.length >= 31 ? 1 : text.length >= 19 ? 2 : 3;
     POOL[sev].push({ text, passage: p });
   }
@@ -40,9 +76,12 @@ exposeState("on-call", () => ({
   phase,
   t: g ? Math.round(g.t) : 0,
   lives: g?.lives,
-  score: g?.score,
+  score: g ? score() : 0,
+  points: g?.points,
+  downtime: g?.downtime,
+  target: g ? target() : 0,
   locked: g?.locked?.id ?? null,
-  incidents: g ? g.incidents.map((i) => ({ id: i.id, sev: i.sev, text: i.text, pos: i.pos, y: Math.round(i.y), passageId: i.passage.id })) : [],
+  incidents: g ? g.incidents.map((i) => ({ id: i.id, sev: i.sev, text: i.text, pos: i.pos, x: Math.round(i.x), y: Math.round(i.y), w: i.w, h: i.h, lane: i.lane, passageId: i.passage.id })) : [],
   resolved: g ? { 1: g.resolved[1].length, 2: g.resolved[2].length, 3: g.resolved[3].length } : null,
   outages: g?.outages.length,
   outageSevs: g?.outages.map((o) => o.sev),
@@ -53,7 +92,7 @@ exposeState("on-call", () => ({
 function newShift() {
   return {
     t: 0, nextSpawn: 400, nextId: 1,
-    lives: LIVES, score: 0,
+    lives: LIVES, points: 0, downtime: 0,
     incidents: [], locked: null, errFlag: false,
     resolved: { 1: [], 2: [], 3: [] }, // {passage, ttr}
     seen: { 1: 0, 2: 0, 3: 0 },
@@ -75,6 +114,7 @@ function showIntro() {
         legendRow(2, "Medium. Worth 30. Costs 15 min."),
         legendRow(3, "Short and slow. Worth 10. Costs 5 min."),
       ),
+      h("p", {}, `Your score is points minus ${PENALTY} for every minute of downtime. A SEV1 that reaches prod costs ${SEV[1].downtime * PENALTY} points.`),
       h("p", { class: "muted" }, "Anything that reaches prod costs a life. Three outages and you are paged out. Press ", h("kbd", {}, "Esc"), " to drop an incident, but you lose its progress."),
       h("div", { class: "row" },
         h("button", { class: "primary", onclick: startShift }, "Start shift"),
@@ -111,6 +151,34 @@ function startShift() {
 }
 
 function progress() { return Math.min(1, g.t / SHIFT_MS); }
+function score() { return g.points - PENALTY * g.downtime; }
+// Incidents in flight to aim for: 3 for the first half, then 4, then 5 in
+// the last 10 seconds.
+function target() { return Math.min(5, 3 + Math.floor(2.2 * progress())); }
+
+// Columns sized to the field. Each incident stays inside its lane.
+function lanes() {
+  const fw = els.field.clientWidth;
+  const n = Math.max(1, Math.min(4, Math.floor(fw / (fw < 600 ? 170 : 300))));
+  return { n, w: fw / n };
+}
+
+// A lane is free if its top is clear and the new incident will not catch
+// up with a slower one below it before that one reaches prod.
+function laneClear(lane, speed, fh) {
+  let room = Infinity;
+  for (const o of g.incidents) {
+    if (o.lane !== lane) continue;
+    if (o.y < 10) return -1;
+    room = Math.min(room, o.y);
+    if (speed > o.speed) {
+      const catchMs = (o.y - 10) / (speed - o.speed);
+      const prodMs = (fh - o.h - o.y) / o.speed;
+      if (catchMs < prodMs) return -1;
+    }
+  }
+  return room;
+}
 
 function pickSeverity() {
   const p = progress();
@@ -130,10 +198,11 @@ function drawPhrase(sev) {
   return g.bag[sev].splice(k, 1)[0];
 }
 
+// Returns false if there was no phrase or no free lane. Try again soon.
 function spawn() {
   const sev = pickSeverity();
   const pick = drawPhrase(sev);
-  if (!pick) return;
+  if (!pick) return false;
   const inc = {
     id: g.nextId++, sev, text: pick.text, passage: pick.passage,
     pos: 0, y: 0, born: g.t,
@@ -144,26 +213,34 @@ function spawn() {
     inc.textEl = h("span", { class: "oc-text" }),
   );
   paintIncident(inc);
+  const L = lanes();
+  inc.el.style.maxWidth = `${Math.floor(L.w - 8)}px`;
   els.field.appendChild(inc.el);
-  const fw = els.field.clientWidth, fh = els.field.clientHeight;
+  const fh = els.field.clientHeight;
   const w = inc.el.offsetWidth, ch = inc.el.offsetHeight;
-  // Pick the x slot farthest from incidents near the top.
-  let best = 0, bestGap = -1;
-  for (let k = 0; k < 4; k++) {
-    const x = rand() * Math.max(0, fw - w - 16) + 8;
-    const near = g.incidents.filter((o) => o.y < 140);
-    const gap = near.length ? Math.min(...near.map((o) => Math.abs(o.x + o.w / 2 - (x + w / 2)))) : 999;
-    if (gap > bestGap) { best = x; bestGap = gap; }
+  const fallSec = SEV[sev].fall * (1 - LATE_SPEEDUP * progress());
+  inc.speed = (fh + ch) / (fallSec * 1000);
+  // Take the free lane with the most room below its top.
+  let lane = -1, bestRoom = -1;
+  for (const k of shuffle([...Array(L.n).keys()], rand)) {
+    const room = laneClear(k, inc.speed, fh);
+    if (room > bestRoom) { lane = k; bestRoom = room; }
   }
-  inc.x = best;
+  if (lane < 0) {
+    inc.el.remove();
+    g.bag[sev].unshift(pick);
+    g.nextId--;
+    return false;
+  }
+  inc.lane = lane;
+  inc.x = lane * L.w + 4 + rand() * Math.max(0, L.w - w - 8);
   inc.w = w;
   inc.h = ch;
   inc.y = -ch;
-  const fallSec = SEV[sev].fall * (1 - 0.25 * progress());
-  inc.speed = (fh + ch) / (fallSec * 1000);
   g.incidents.push(inc);
   g.seen[sev]++;
   place(inc);
+  return true;
 }
 
 function place(inc) {
@@ -183,10 +260,10 @@ function paintIncident(inc) {
 function tick(dt) {
   if (phase !== "play") return;
   g.t += dt;
-  if (g.t >= g.nextSpawn && g.incidents.length < 8) {
-    spawn();
-    const gap = 5200 - 2400 * progress();
-    g.nextSpawn = g.t + gap * (0.8 + 0.4 * rand());
+  // Spawn on load, not on a clock: keep about target() incidents in flight,
+  // with a short gap so they do not all arrive at once.
+  if (g.t >= g.nextSpawn && g.incidents.length < target()) {
+    g.nextSpawn = g.t + (spawn() ? 900 + 600 * rand() : 250);
   }
   const fh = els.field.clientHeight;
   for (const inc of [...g.incidents]) {
@@ -206,6 +283,7 @@ function removeIncident(inc) {
 function outage(inc) {
   removeIncident(inc);
   g.lives--;
+  g.downtime += SEV[inc.sev].downtime;
   g.outages.push({ sev: inc.sev, text: inc.text });
   inc.el.remove();
   const boom = h("div", { class: `oc-boom sev${inc.sev}`, style: { left: `${inc.x}px`, width: `${inc.w}px` } }, `${SEV[inc.sev].label} down`);
@@ -214,17 +292,37 @@ function outage(inc) {
   els.field.classList.remove("shake");
   void els.field.offsetWidth; // restart the animation
   els.field.classList.add("shake");
-  paintStatus(`${SEV[inc.sev].label} hit prod. ${SEV[inc.sev].downtime} min of downtime.`, "bad");
+  paintStatus(`${SEV[inc.sev].label} hit prod. ${SEV[inc.sev].downtime} min of downtime, -${SEV[inc.sev].downtime * PENALTY} points.`, "bad");
 }
 
 function resolve(inc) {
   removeIncident(inc);
   const ttr = g.t - inc.born;
   g.resolved[inc.sev].push({ passage: inc.passage, ttr });
-  g.score += SEV[inc.sev].points;
+  g.points += SEV[inc.sev].points;
   inc.el.classList.add("resolved");
   setTimeout(() => inc.el.remove(), 350);
+  flashLesson(inc);
   paintStatus(`${SEV[inc.sev].label} resolved in ${fmt(ttr / 1000, 1)}s. +${SEV[inc.sev].points}`, "good");
+}
+
+// Show the one-line lesson of the passage this fragment came from, where
+// the incident was resolved. It sits under the incidents and fades out.
+function flashLesson(inc) {
+  if (!inc.passage.lesson) return;
+  const fw = els.field.clientWidth, fh = els.field.clientHeight;
+  const w = Math.min(fw - 8, 360);
+  const note = h("div", {
+    class: "oc-lesson",
+    style: {
+      width: `${w}px`,
+      left: `${Math.max(4, Math.min(inc.x, fw - w - 4))}px`,
+      top: `${Math.max(4, Math.min(inc.y, fh - 110))}px`,
+    },
+  }, h("span", { class: "oc-lesson-l" }, "lesson "), inc.passage.lesson);
+  els.field.querySelectorAll(".oc-lesson").forEach((n) => n.remove()); // one at a time
+  els.field.appendChild(note);
+  setTimeout(() => note.remove(), 3000);
 }
 
 function paintHud() {
@@ -232,7 +330,8 @@ function paintHud() {
   const mm = Math.floor(left / 60), ss = Math.floor(left % 60);
   render(els.hud,
     h("div", { class: "oc-hud-item" }, h("span", { class: "l" }, "shift"), h("span", { class: "v" }, `${mm}:${String(ss).padStart(2, "0")}`)),
-    h("div", { class: "oc-hud-item" }, h("span", { class: "l" }, "score"), h("span", { class: "v" }, String(g.score))),
+    h("div", { class: "oc-hud-item" }, h("span", { class: "l" }, "score"), h("span", { class: "v" }, String(score()))),
+    h("div", { class: "oc-hud-item" }, h("span", { class: "l" }, "downtime"), h("span", { class: "v" + (g.downtime ? " oc-down" : "") }, `${g.downtime}m`)),
     h("div", { class: "oc-hud-item" }, h("span", { class: "l" }, "uptime"),
       h("span", { class: "v oc-lives" }, Array.from({ length: LIVES }, (_, i) => h("span", { class: i < g.lives ? "on" : "off" })))),
     h("div", { class: "oc-hud-item oc-hud-sev" },
@@ -313,7 +412,7 @@ function endShift() {
   const handedOff = g.incidents.length;
   const all = [1, 2, 3].flatMap((s) => g.resolved[s]);
   const mttr = all.length ? all.reduce((a, r) => a + r.ttr, 0) / all.length / 1000 : NaN;
-  const downtime = g.outages.reduce((a, o) => a + SEV[o.sev].downtime, 0);
+  const downtime = g.downtime;
   const pagedOut = g.lives <= 0;
   const sev1Down = g.outages.filter((o) => o.sev === 1).length;
 
@@ -338,13 +437,21 @@ function endShift() {
           ? `Prod went down ${g.outages.length} times in ${fmt(g.t / 1000)} seconds.`
           : `You held prod for the full shift. ${handedOff} open ${handedOff === 1 ? "incident" : "incidents"} handed off.`),
       ),
+      h("div", { class: "oc-headline" },
+        h("div", { class: "oc-head-item" },
+          h("div", { class: "oc-head-v" }, String(score())),
+          h("div", { class: "oc-head-l" }, "score")),
+        h("div", { class: "oc-head-item" + (downtime ? " oc-down" : "") },
+          h("div", { class: "oc-head-v" }, `${downtime} min`),
+          h("div", { class: "oc-head-l" }, "downtime")),
+      ),
+      h("p", { class: "center muted oc-math" },
+        `${g.points} points from fixes, minus ${downtime * PENALTY} for ${downtime} min of downtime.`),
       statsRow([
-        ["score", g.score],
         ["SEV1 fixed", `${g.resolved[1].length}/${g.seen[1]}`],
         ["SEV2 fixed", `${g.resolved[2].length}/${g.seen[2]}`],
         ["SEV3 fixed", `${g.resolved[3].length}/${g.seen[3]}`],
         ["MTTR", Number.isFinite(mttr) ? `${fmt(mttr, 1)}s` : "-"],
-        ["downtime", `${downtime} min`],
         ["accuracy", pct(g.keystrokes ? (g.keystrokes - g.mistakes) / g.keystrokes : 1)],
       ]),
       h("p", { class: "oc-triage" }, triage),

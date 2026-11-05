@@ -15,14 +15,25 @@ const errors = await withGame("slo-burn", { seed: 4 }, async (page, { shot }) =>
   const words = s.text.split(" ");
   await typeText(page, s.text, { delay: 35, typoRate: 0.02, slowWords: { [words[3]]: 300, [words[8]]: 300 } });
   s = await state(page);
-  console.log("after batch 1", { budget: s.budget, served: s.served, passages: s.passages, p99: s.p99 });
+  console.log("after batch 1", { budget: s.budget, served: s.served, passages: s.passages, p99: s.p99, target: s.target, readLeft: s.readLeft });
+  if (!(s.target < s.baseTarget)) throw new Error("target should tighten after a passage");
+  if (!(s.readLeft > 0)) throw new Error("new passage should start with read time");
+  await shot("2a-read");
+
+  // Rest past the read time: the in-flight clock must start and burn budget.
+  const before = s.budget;
+  await page.waitForTimeout(2100);
+  s = await state(page);
+  console.log("after resting 2.1s", { budget: s.budget, readLeft: s.readLeft });
+  if (!(s.budget < before)) throw new Error("resting past the read time should burn budget");
 
   // Batch 2: type a little, then stall until the in-flight request kills the budget.
   await typeText(page, s.text.slice(0, 30), { delay: 35 });
   await shot("2-run");
   await waitPhase(page, "outage");
   s = await state(page);
-  console.log("outage", { cause: s.cause, served: s.served, p50: s.p50, p95: s.p95, p99: s.p99, worst: s.worst });
+  console.log("outage", { cause: s.cause, timeout: s.timeout, served: s.served, p50: s.p50, p95: s.p95, p99: s.p99, worst: s.worst });
+  if (s.cause === "timeout" && s.worst.some((g) => g.ms >= s.timeout.ms)) throw new Error("timeout sample leaked into the stats");
   await shot("3-postmortem");
 
   await page.keyboard.press("Enter");

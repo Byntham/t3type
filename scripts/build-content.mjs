@@ -4,7 +4,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
 const src = JSON.parse(readFileSync("content/research/grok-passages.json", "utf8"));
 const names = Object.fromEntries(src.people.map((p) => [p.handle.toLowerCase(), p.name]));
-const passages = src.passages.map((p) => ({
+// Passages marked standalone: false need context the player does not see
+// (mid-thread replies, unanswered questions), so they stay in the research
+// file but are left out of the game library.
+const kept = src.passages.filter((p) => p.standalone !== false);
+const left = src.passages.length - kept.length;
+const passages = kept.map((p) => ({
   id: p.id,
   name: names[p.handle.toLowerCase()] || p.handle,
   handle: p.handle,
@@ -23,4 +28,4 @@ writeFileSync(
     `export const PEOPLE = ${JSON.stringify(src.people, null, 2)};\n\n` +
     `export const X_PASSAGES = ${JSON.stringify(passages, null, 2)};\n`,
 );
-console.log(`wrote ${passages.length} passages`);
+console.log(`wrote ${passages.length} passages, left out ${left} marked standalone: false`);

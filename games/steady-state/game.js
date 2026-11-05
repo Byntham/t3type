@@ -1,13 +1,16 @@
-// Steady State: a metronome ticks one beat per word. Finish each word
-// (its trailing space) on its beat. Early is as wrong as late. The end
-// screen shows how even your timing was, because steady throughput is what
-// ships, not bursts.
+// Steady State: the tempo is a steady typing rate (characters per second,
+// shown as wpm). Each word gets a time slot in proportion to its length plus
+// its space, and its trailing space is due at the end of the slot. Early is
+// as wrong as late. The end screen shows how even your timing was, because
+// steady throughput is what ships, not bursts.
 import { TypingSession, TextView, listenKeys, loop, now } from "../../shared/engine.js";
 import { rng, getSeed, shuffle, filterPassages } from "../../shared/content.js";
 import { mountShell, h, render, lessonCard, statsRow, fmt, pct, exposeState } from "../../shared/ui.js";
 
 const COUNT_IN = 4;
-const TEMPO_MIN = 16, TEMPO_MAX = 100, TEMPO_STEP = 4;
+const COUNT_CHARS = 5; // count-in beats are one "word" (5 chars) apart
+const TEMPO_MIN = 12, TEMPO_MAX = 120, TEMPO_STEP = 4; // wpm
+const MIN_FINISHED = 3; // fewer finished words than this is not enough data
 const NS = "http://www.w3.org/2000/svg";
 
 const main = mountShell({ title: "Steady State", tagline: "Sustainable pace beats sprints." });
@@ -20,7 +23,7 @@ function nextPassage() {
 }
 
 let phase = "setup"; // setup | play | results
-let tempo = 36; // beats (words) per minute
+let tempo = 36; // wpm: (chars / 5) per minute
 let passage = nextPassage();
 let round = null;
 
@@ -29,7 +32,8 @@ exposeState("steady-state", () => {
   const i = r ? typingIndex() : null;
   return {
     phase, tempo, passageId: passage.id,
-    interval: r?.I,
+    msPerChar: msPerChar(tempo),
+    countInLeft: r ? Math.max(0, Math.round(r.start - now())) : null,
     text: r?.session.text, pos: r?.session.pos,
     n: r?.words.length,
     wordIndex: i,
@@ -73,11 +77,16 @@ function click(accent, inSec) {
 }
 
 // ---------- timing rules ----------
-function windows(I) {
-  return { perfect: Math.max(80, 0.07 * I), good: Math.max(170, 0.16 * I), late: 0.5 * I };
+function msPerChar(wpmTempo) { return 12000 / wpmTempo; }
+// Windows scale with the typing rate: Perfect is about half a character
+// either side of the due time, Good about one character.
+function windows(mpc) {
+  const perfect = Math.max(130, 0.5 * mpc);
+  const good = Math.max(260, 1.1 * mpc);
+  return { perfect, good, late: Math.max(600, 2 * good) };
 }
-function judge(off, I) {
-  const w = windows(I);
+function judge(off, mpc) {
+  const w = windows(mpc);
   const a = Math.abs(off);
   if (a <= w.perfect) return "perfect";
   if (a <= w.good) return "good";
@@ -87,32 +96,28 @@ function judge(off, I) {
 }
 const LABEL = { perfect: "Perfect", good: "Good", early: "Early", late: "Late", miss: "Miss" };
 
-function avgWordChars(text) {
-  const ws = text.split(" ");
-  return text.length / ws.length; // includes the space share
-}
-function tempoWpm(bpm, text) { return (bpm * avgWordChars(text)) / 5; }
-
 // ---------- setup ----------
 function showSetup() {
   phase = "setup";
   round = null;
   const n = passage.text.split(" ").length;
+  const mpc = msPerChar(tempo);
   render(main,
     h("div", { class: "panel stack" },
-      h("div", {}, h("span", { class: "pill" }, "rhythm"), " ", h("b", {}, "Ship one word on every beat.")),
+      h("div", {}, h("span", { class: "pill" }, "rhythm"), " ", h("b", {}, "Type at one steady rate.")),
       h("ul", { class: "ss-rules" },
-        h("li", {}, "A metronome ticks. Each beat, one word is due."),
-        h("li", {}, "Words slide toward the line. Press the space after a word as it crosses the line."),
+        h("li", {}, "Each word gets time for its letters plus its space. Long words get more time."),
+        h("li", {}, "Words slide toward the line. Press the space after a word as its right edge crosses the line."),
         h("li", {}, "Early is as bad as late. Bursting ahead does not count."),
+        h("li", {}, "Wait for the count-in. Keys do nothing until it ends."),
         h("li", {}, "Typos block you until you fix them. Backspace is off."),
       ),
       h("div", { class: "ss-tempo" },
         h("button", { class: "ss-step", "aria-label": "slower", onclick: () => setTempo(tempo - TEMPO_STEP) }, "-"),
         h("div", { class: "center" },
           h("div", { class: "big" }, String(tempo)),
-          h("div", { class: "muted" }, "words per minute (beats)"),
-          h("div", { class: "muted ss-small" }, `${n} words. About ${fmt(tempoWpm(tempo, passage.text))} wpm for this passage. ${fmt(60 / tempo, 2)}s per word.`),
+          h("div", { class: "muted" }, "wpm tempo"),
+          h("div", { class: "muted ss-small" }, `${n} words. ${fmt(1000 / mpc, 1)} characters per second. A five-letter word and its space get ${fmt((6 * mpc) / 1000, 2)}s.`),
         ),
         h("button", { class: "ss-step", "aria-label": "faster", onclick: () => setTempo(tempo + TEMPO_STEP) }, "+"),
       ),
@@ -143,11 +148,21 @@ function startRound() {
   audioInit();
   const session = new TypingSession(passage.text, { allowBackspace: false, blockOnError: true });
   const words = session.words();
-  const I = 60000 / tempo;
+  const mpc = msPerChar(tempo);
+  const beat = COUNT_CHARS * mpc; // count-in spacing
   const t0 = now() + 700;
+  const start = t0 + COUNT_IN * beat; // typing opens here; word 0's slot starts
+  // Word i's slot is (length + 1) chars long. Its space is due at the end.
+  const slotStart = [], due = [];
+  let at = start;
+  for (const w of words) { slotStart.push(at); at += (w.word.length + 1) * mpc; due.push(at); }
+  // Click and pulse times: the count-in, "go", then each word's due time.
+  const countBeats = Array.from({ length: COUNT_IN + 1 }, (_, k) => t0 + k * beat);
   round = {
-    session, words, I, t0,
-    due: words.map((_, i) => t0 + (COUNT_IN + i) * I),
+    session, words, mpc, t0, start,
+    slotStart, due,
+    beats: [...countBeats, ...due],
+    countBeats,
     judged: words.map(() => null),
     offsets: words.map(() => null),
     doneAt: words.map(() => null),
@@ -156,6 +171,7 @@ function startRound() {
     nextJudge: 0,
     nextClick: 0,
     lastBeat: -1,
+    countingIn: true,
     stop: null,
     summary: null,
   };
@@ -164,15 +180,17 @@ function startRound() {
   ui.lane = h("div", { class: "ss-lane" });
   ui.hit = h("div", { class: "ss-hit" });
   ui.pop = h("div", { class: "ss-pop" });
+  ui.good = h("div", { class: "ss-win good" });
+  ui.perfect = h("div", { class: "ss-win perfect" });
+  ui.lane.append(ui.good, ui.perfect);
   ui.ticks = [];
   ui.notes = [];
-  const totalBeats = COUNT_IN + words.length;
-  for (let k = 0; k < totalBeats; k++) {
-    const label = k < COUNT_IN ? String(COUNT_IN - k) : null;
-    const t = h("div", { class: "ss-tick" + (label ? " count" : "") }, label ? h("span", {}, label) : null);
+  round.countBeats.forEach((_, k) => {
+    const label = k < COUNT_IN ? String(COUNT_IN - k) : "go";
+    const t = h("div", { class: "ss-tick count" }, h("span", {}, label));
     ui.ticks.push(t);
     ui.lane.appendChild(t);
-  }
+  });
   words.forEach((w, i) => {
     const n = h("div", { class: "ss-note " + (i % 2 ? "low" : "high") }, h("span", {}, w.word));
     ui.notes.push(n);
@@ -183,16 +201,18 @@ function startRound() {
   ui.progress = h("div", { class: "v" }, `0/${words.length}`);
   ui.counts = h("div", { class: "ss-counts" });
   ui.text = h("div", { class: "ss-text" });
+  ui.status = h("div", { class: "muted ss-status" }, "Count-in. Start typing on go.");
 
   render(main,
     h("div", { class: "panel stack ss-play" },
       h("div", { class: "row ss-hud" },
         h("div", { class: "stat" }, ui.combo, h("div", { class: "l" }, "combo")),
         h("div", { class: "stat" }, ui.progress, h("div", { class: "l" }, "words")),
-        h("div", { class: "stat" }, h("div", { class: "v" }, String(tempo)), h("div", { class: "l" }, "beats/min")),
+        h("div", { class: "stat" }, h("div", { class: "v" }, String(tempo)), h("div", { class: "l" }, "wpm tempo")),
         ui.counts,
       ),
       ui.lane,
+      ui.status,
       ui.text,
     ),
   );
@@ -207,60 +227,75 @@ function paintCounts() {
     h("span", { class: `ss-count j-${k}` }, `${LABEL[k]} `, h("b", {}, String(round.counts[k])))));
 }
 
+// The lane maps time to x at a fixed number of pixels per character, so
+// each word's bar is as wide as its slot and the text fits inside it.
 function laneGeom() {
   const w = ui.lane.clientWidth || 600;
-  return { w, hitX: Math.max(70, w * 0.2), spacing: Math.max(110, Math.min(190, w / 5)) };
+  const pxPerChar = Math.max(10, Math.min(16, w / 40));
+  return { w, hitX: Math.max(56, w * 0.2), pxPerMs: pxPerChar / round.mpc };
 }
 
 function frame() {
   if (phase !== "play") return;
   const t = now();
   const r = round;
-  const { w, hitX, spacing } = laneGeom();
-  const xAt = (time) => hitX + ((time - t) / r.I) * spacing;
+  const { w, hitX, pxPerMs } = laneGeom();
+  const xAt = (time) => hitX + (time - t) * pxPerMs;
   ui.hit.style.left = `${hitX}px`;
   ui.pop.style.left = `${hitX}px`;
+  const win = windows(r.mpc);
+  for (const [el, ms] of [[ui.perfect, win.perfect], [ui.good, win.good]]) {
+    const half = Math.max(3, ms * pxPerMs);
+    el.style.left = `${(hitX - half).toFixed(1)}px`;
+    el.style.width = `${(2 * half).toFixed(1)}px`;
+  }
 
   // Schedule clicks a little ahead so they land on time.
-  const totalBeats = COUNT_IN + r.words.length;
-  while (r.nextClick < totalBeats && r.t0 + r.nextClick * r.I - t < 120) {
+  while (r.nextClick < r.beats.length && r.beats[r.nextClick] - t < 120) {
     const k = r.nextClick++;
-    click(k < COUNT_IN ? k === 0 : (k - COUNT_IN) % 4 === 0, (r.t0 + k * r.I - t) / 1000);
+    const accent = k === 0 || k === COUNT_IN || (k > COUNT_IN && (k - COUNT_IN) % 4 === 0);
+    click(accent, (r.beats[k] - t) / 1000);
   }
-  const beat = Math.floor((t - r.t0) / r.I);
-  if (beat > r.lastBeat && beat >= 0) {
-    r.lastBeat = beat;
+  while (r.lastBeat + 1 < r.beats.length && r.beats[r.lastBeat + 1] <= t) {
+    r.lastBeat++;
     ui.hit.classList.remove("pulse");
     void ui.hit.offsetWidth;
     ui.hit.classList.add("pulse");
   }
+  if (r.countingIn && t >= r.start) { r.countingIn = false; ui.status.textContent = "Go. Hit each space as its word reaches the line."; }
 
-  for (let k = 0; k < totalBeats; k++) {
-    const x = xAt(r.t0 + k * r.I);
+  r.countBeats.forEach((bt, k) => {
+    const x = xAt(bt);
     const el = ui.ticks[k];
     const vis = x > -40 && x < w + 40;
     el.style.visibility = vis ? "visible" : "hidden";
     if (vis) el.style.transform = `translateX(${x.toFixed(1)}px)`;
-  }
+  });
   const typing = typingIndex();
   r.words.forEach((wd, i) => {
-    const x = xAt(r.due[i]);
+    const x0 = xAt(r.slotStart[i]), x1 = xAt(r.due[i]);
     const el = ui.notes[i];
-    const vis = x > -160 && x < w + 160;
+    const vis = x1 > -20 && x0 < w + 20;
     el.style.visibility = vis ? "visible" : "hidden";
-    if (vis) el.style.transform = `translateX(${x.toFixed(1)}px) translateX(-50%)`;
+    if (vis) {
+      el.style.transform = `translateX(${x0.toFixed(1)}px)`;
+      el.style.width = `${Math.max(4, x1 - x0 - 2).toFixed(1)}px`;
+    }
     el.classList.toggle("typing", i === typing);
   });
 
-  // Words whose beat passed long ago without being finished are misses.
-  const lateMs = windows(r.I).late;
+  // Words whose due time passed long ago without being finished are misses.
   while (r.nextJudge < r.words.length) {
     const i = r.nextJudge;
     if (r.judged[i]) { r.nextJudge++; continue; }
-    if (t > r.due[i] + lateMs) { setJudgement(i, "miss"); r.nextJudge++; continue; }
+    if (t > r.due[i] + win.late) { setJudgement(i, "miss"); r.nextJudge++; continue; }
     break;
   }
-  if (r.nextJudge >= r.words.length && t > r.due[r.words.length - 1] + 400) finish();
+  // End once every word is judged. If the last word was missed, that already
+  // waited out its full Late window. If it was typed, end shortly after.
+  const last = r.words.length - 1;
+  const endAt = r.doneAt[last] != null ? r.doneAt[last] + 500 : r.due[last] + win.late;
+  if (r.nextJudge >= r.words.length && t > endAt) finish();
 }
 
 function setJudgement(i, j) {
@@ -281,6 +316,7 @@ function setJudgement(i, j) {
 
 function onType(key) {
   const r = round;
+  if (now() < r.start) return; // count-in: keys do nothing yet
   const before = typingIndex();
   const res = r.session.input(key);
   const t = now();
@@ -297,7 +333,7 @@ function onType(key) {
   if (w && (res.index === w.end || (before === r.words.length - 1 && r.session.done))) {
     r.doneAt[before] = t;
     r.offsets[before] = t - r.due[before];
-    if (!r.judged[before]) setJudgement(before, judge(r.offsets[before], r.I));
+    if (!r.judged[before]) setJudgement(before, judge(r.offsets[before], r.mpc));
   }
 }
 
@@ -311,18 +347,24 @@ function finish() {
 function summarize() {
   const r = round;
   const offs = r.offsets.filter((o) => o != null);
-  const mean = offs.length ? offs.reduce((a, b) => a + b, 0) / offs.length : 0;
-  const sd = offs.length > 1 ? Math.sqrt(offs.reduce((a, o) => a + (o - mean) ** 2, 0) / (offs.length - 1)) : 0;
+  const enough = offs.length >= MIN_FINISHED;
+  const mean = enough ? offs.reduce((a, b) => a + b, 0) / offs.length : null;
+  const sd = enough ? Math.sqrt(offs.reduce((a, o) => a + (o - mean) ** 2, 0) / (offs.length - 1)) : null;
   const n = r.words.length;
   const onBeat = (r.counts.perfect + r.counts.good) / n;
-  // Gaps between finished words show sprints and stalls directly.
-  const gaps = [];
-  for (let i = 1; i < n; i++) if (r.doneAt[i] != null && r.doneAt[i - 1] != null) gaps.push(r.doneAt[i] - r.doneAt[i - 1]);
+  // Pace between finished words (in wpm) shows sprints and stalls directly.
+  const paces = [];
+  for (let i = 1; i < n; i++) {
+    if (r.doneAt[i] != null && r.doneAt[i - 1] != null) {
+      const ms = r.doneAt[i] - r.doneAt[i - 1];
+      if (ms > 0) paces.push(((r.words[i].word.length + 1) / 5) / (ms / 60000));
+    }
+  }
   return {
-    mean, sd, onBeat, n,
+    mean, sd, onBeat, n, enough,
     finished: offs.length,
-    fastest: gaps.length ? Math.min(...gaps) : null,
-    slowest: gaps.length ? Math.max(...gaps) : null,
+    slowest: paces.length ? Math.min(...paces) : null,
+    fastest: paces.length ? Math.max(...paces) : null,
   };
 }
 
@@ -330,9 +372,9 @@ function summarize() {
 function timingChart() {
   const r = round;
   const W = Math.max(300, r.words.length * 18), H = 180, mid = H / 2;
-  const lim = r.I * 0.6; // offsets beyond this are clipped to the edge
+  const win = windows(r.mpc);
+  const lim = win.late; // offsets beyond this are clipped to the edge
   const y = (off) => mid - (Math.max(-lim, Math.min(lim, off)) / lim) * (mid - 6); // late is up
-  const win = windows(r.I);
   const svg = document.createElementNS(NS, "svg");
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.setAttribute("preserveAspectRatio", "none");
@@ -385,31 +427,37 @@ function countsBar(counts) {
 function showResults() {
   const r = round;
   const s = r.summary;
-  const dir = Math.abs(s.mean) < 40 ? "You were centered on the beat." : s.mean < 0 ? `You rushed. On average you finished ${fmt(-s.mean)} ms before the beat.` : `You dragged. On average you finished ${fmt(s.mean)} ms after the beat.`;
+  const dir = !s.enough ? null
+    : Math.abs(s.mean) < 40 ? "You were centered on the beat."
+    : s.mean < 0 ? `You rushed. On average you finished ${fmt(-s.mean)} ms before the beat.`
+    : `You dragged. On average you finished ${fmt(s.mean)} ms after the beat.`;
   let next = tempo;
   let advice;
-  if (s.onBeat >= 0.8 && s.sd < windows(r.I).good) { next = Math.min(TEMPO_MAX, tempo + TEMPO_STEP); advice = `Solid. Try ${next} next.`; }
-  else if (s.onBeat < 0.4) { next = Math.max(TEMPO_MIN, tempo - TEMPO_STEP); advice = `Too fast to hold. Try ${next} next. A pace you can keep beats one you can hit once.`; }
+  if (s.enough && s.onBeat >= 0.8 && s.sd < windows(r.mpc).good) { next = Math.min(TEMPO_MAX, tempo + TEMPO_STEP); advice = `Solid. Try ${next} wpm next.`; }
+  else if (s.onBeat < 0.4) { next = Math.max(TEMPO_MIN, tempo - TEMPO_STEP); advice = `Too fast to hold. Try ${next} wpm next. A pace you can keep beats one you can hit once.`; }
   else advice = "Stay at this tempo until the spread shrinks.";
-  const spread = s.fastest != null
-    ? `Between words you swung from ${fmt(s.fastest / 1000, 2)}s to ${fmt(s.slowest / 1000, 2)}s. The beat asked for ${fmt(r.I / 1000, 2)}s every time.`
+  const spread = s.enough && s.fastest != null
+    ? `Between words your pace swung from ${fmt(s.slowest)} to ${fmt(s.fastest)} wpm. The tempo asked for ${tempo} wpm every time.`
     : "";
+  const signed = (v) => `${v > 0 ? "+" : ""}${fmt(v)} ms`;
 
   render(main,
     h("div", { class: "panel stack ss-results" },
       h("div", { class: "center" },
         h("div", { class: "big" }, pct(s.onBeat)),
-        h("div", { class: "muted" }, `of words on the beat at ${tempo} beats/min`),
+        h("div", { class: "muted" }, `of words on the beat at ${tempo} wpm`),
       ),
       statsRow([
-        ["spread (sd)", `±${fmt(s.sd)} ms`],
-        ["avg offset", `${s.mean > 0 ? "+" : ""}${fmt(s.mean)} ms`],
+        ["spread (sd)", s.enough ? `±${fmt(s.sd)} ms` : "-"],
+        ["avg offset", s.enough ? signed(s.mean) : "-"],
         ["max combo", r.maxCombo],
         ["typos", r.mistakes],
       ]),
       countsBar(r.counts),
       h("div", { class: "ss-finding" },
-        h("p", {}, `Your spread was ±${fmt(s.sd)} ms. That is your consistency score. Lower is better. `, dir),
+        s.enough
+          ? h("p", {}, `Your spread was ±${fmt(s.sd)} ms. That is your consistency score. Lower is better. `, dir)
+          : h("p", {}, `You finished ${s.finished} of ${s.n} words. That is not enough data for a timing score.`),
         spread ? h("p", {}, spread) : null,
         h("p", {}, advice),
       ),
@@ -419,7 +467,7 @@ function showResults() {
       lessonCard(passage),
       h("div", { class: "row" },
         h("button", { class: "primary", onclick: () => playAgain(next) }, "Play again"),
-        h("span", { class: "muted" }, h("kbd", {}, "Enter"), ` next passage at ${next} beats/min`),
+        h("span", { class: "muted" }, h("kbd", {}, "Enter"), ` next passage at ${next} wpm`),
       ),
     ),
   );
