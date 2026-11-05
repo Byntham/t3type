@@ -55,7 +55,6 @@ export interface GameState {
 
 const params = new URLSearchParams(typeof location === "undefined" ? "" : location.search);
 const SPEED = Math.max(0.1, Number(params.get("speed") ?? 1) || 1);
-const SETTLE_DELAY_MS = 1800;
 
 const seedParam = params.get("seed");
 let sessionSeed = seedParam !== null && seedParam !== "" ? Number(seedParam) : Math.floor(Math.random() * 1e9);
@@ -220,34 +219,7 @@ function advance(s: GameState, now: GameMs): GameState {
       updatedAt: finishedAt,
     };
   });
-  let next: GameState = { ...s, threads: changed ? threads : s.threads, now };
-  next = autoSettle(next, now);
-  if (s.session.status === "playing" && next.threads.every(isComplete)) {
-    next = endSession(next, "done", now);
-  }
-  return next;
-}
-
-function autoSettle(s: GameState, now: GameMs): GameState {
-  const delay = SETTLE_DELAY_MS * SPEED;
-  const ready = s.threads.filter((thread) => {
-    if (isSettled(thread) || !isComplete(thread)) return false;
-    const last = thread.turns.at(-1);
-    return last !== undefined && now >= last.startedAt + last.durationMs + delay;
-  });
-  if (ready.length === 0) return s;
-  const readyIds = new Set(ready.map((thread) => thread.def.id));
-  let next: GameState = {
-    ...s,
-    threads: s.threads.map((thread) =>
-      readyIds.has(thread.def.id) ? { ...thread, settledAt: now, unread: false } : thread,
-    ),
-  };
-  if (readyIds.has(s.activeId)) {
-    const target = nextThreadNeedingPlayer(next);
-    if (target) next = withSelected(next, target);
-  }
-  return next;
+  return { ...s, threads: changed ? threads : s.threads, now };
 }
 
 function endSession(s: GameState, reason: "done", at: GameMs): GameState {
@@ -384,8 +356,23 @@ function nextThreadNeedingPlayer(s: GameState): string | null {
     waiting.find((id) => byId.get(id)!.unread) ??
     waiting[0] ??
     rotated.find((id) => isWorking(byId.get(id)!)) ??
+    rotated.find((id) => !isSettled(byId.get(id)!)) ??
     null
   );
+}
+
+export function settleActive() {
+  const thread = activeThread();
+  if (state.session.status === "ended" || isSettled(thread) || !isComplete(thread)) return;
+  const now = clock();
+  let s = advance(state, now);
+  s = updateThread(s, thread.def.id, (t) => ({ ...t, settledAt: now, unread: false }));
+  if (s.threads.every(isSettled)) {
+    set(endSession(s, "done", now));
+    return;
+  }
+  const target = nextThreadNeedingPlayer(s);
+  set(target ? withSelected(s, target) : s);
 }
 
 export function cycleThread(direction: 1 | -1) {
