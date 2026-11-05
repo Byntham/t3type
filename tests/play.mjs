@@ -277,7 +277,23 @@ async function checkWrongKeysShowExpectedText(browser) {
   const bad = spans.map((s, i) => (s.typed === "bad" ? i : -1)).filter((i) => i >= 0);
   check(bad.join(",") === `2,${space}`, `wrong keys are marked at 2 and ${space} (got ${bad.join(",")})`);
   check(spans[2]?.text === text[2], `a wrong letter shows the expected "${text[2]}" (got "${spans[2]?.text}")`);
-  check(spans[space]?.text === "\u00b7", `a key typed in place of a space shows a dot (got "${spans[space]?.text}")`);
+  check(spans[space]?.text.includes("\u00b7"), `a key typed in place of a space shows a dot (got "${spans[space]?.text}")`);
+  await page.addStyleTag({ content: '[data-testid="composer-editor"] { font-family: "Liberation Sans" !important; }' });
+  const ghostLeft = () =>
+    page.locator('[data-testid="composer-editor"] [data-ghost]').evaluate((el) => el.getClientRects()[0].left);
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type(" ");
+  const leftAfterSpace = await ghostLeft();
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type("x");
+  const leftAfterWrong = await ghostLeft();
+  check(
+    Math.abs(leftAfterSpace - leftAfterWrong) < 0.01,
+    `a wrong key on a space does not move the text after it (${leftAfterSpace} vs ${leftAfterWrong})`,
+  );
   check(errors.length === 0, `no console errors in wrong key run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
   await page.close();
 }
