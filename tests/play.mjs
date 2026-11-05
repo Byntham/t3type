@@ -11,7 +11,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "/srv/dev/t3/projects/swetype/node_modules/playwright/index.mjs";
+import { chromium } from "playwright";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");

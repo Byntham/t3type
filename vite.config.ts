@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5179,
-    // The thread content lives in ../content/research and is imported at build time.
-    fs: { allow: [`${here}..`] },
+    // Reachable by tailnet hostname (for example gibo:5179), not only localhost.
+    allowedHosts: true,
   },
 });

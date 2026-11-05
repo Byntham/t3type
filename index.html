@@ -1,52 +1,20 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>swetype</title>
-  <link rel="icon" href="assets/icon.svg">
-  <link rel="stylesheet" href="shared/style.css">
-  <style>
-    .hero h1 { font-size: 2rem; margin: 0 0 4px; }
-    .hero p { margin: 0; color: var(--muted); max-width: 60ch; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-    .card { display: block; text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
-    .card:hover, .card:focus-visible { border-color: var(--accent); transform: translateY(-2px); outline: none; }
-    .card .n { font-family: var(--mono); color: var(--faint); font-size: .8rem; }
-    .card h2 { margin: 2px 0; font-size: 1.15rem; }
-    .card .idea { color: var(--accent-2); font-family: var(--mono); font-size: .9rem; }
-    .card p { margin: 8px 0 0; color: var(--muted); font-size: .92rem; }
-  </style>
-</head>
-<body>
-  <div class="shell stack">
-    <header class="hero">
-      <h1>swetype</h1>
-      <p>Typing practice where every passage is an engineering lesson, and every game mechanic teaches one too. Press a number key to jump in.</p>
-    </header>
-    <div class="grid" id="grid"></div>
-  </div>
-  <script type="module">
-    import { GAMES } from "./games/registry.js";
-    import { h } from "./shared/ui.js";
-    const grid = document.getElementById("grid");
-    GAMES.forEach((g, i) => grid.appendChild(
-      h("a", { class: "card panel", href: g.href ?? `games/${g.slug}/index.html` },
-        h("div", { class: "n" }, i < 10 ? `${(i + 1) % 10}` : ""),
-        h("h2", {}, g.title),
-        h("div", { class: "idea" }, g.idea),
-        h("p", {}, g.how),
-      ),
-    ));
-    addEventListener("keydown", (e) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (!/^[0-9]$/.test(e.key)) return;
-      const n = Number(e.key);
-      {
-        const g = GAMES[(n + 9) % 10];
-        if (g) location.href = `games/${g.slug}/index.html`;
-      }
-    });
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>t3type</title>
+    <script>
+      // Match T3 Code: the .dark class on <html> drives the dark variant.
+      (function () {
+        var q = new URLSearchParams(location.search).get("theme");
+        var dark = q ? q === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.classList.toggle("dark", dark);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
