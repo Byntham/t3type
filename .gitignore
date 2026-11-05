@@ -1,3 +1,6 @@
 node_modules
 dist
 tests/shots/*.png
+
+# Raw scraped timelines: local research only, not redistributed.
+content/research/timelines/
