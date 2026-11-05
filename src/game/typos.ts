@@ -1,19 +1,13 @@
-// Diff what the player typed against the target prompt, word by word, and build
-// an agent reply that takes every typo literally.
-import type { PersonaKey, ScriptedReply, ToolRow, ToolType } from "~/content/prompts";
+import type { LineCounts, PersonaKey, ScriptedReply, ToolRow, ToolType } from "~/content/prompts";
 
 export interface WordTypo {
-  /** The word the prompt asked for. */
   target: string;
-  /** What the player typed instead. */
   typed: string;
 }
 
 export interface PromptDiff {
   typos: WordTypo[];
-  /** Target words the player left out. */
   missing: string[];
-  /** Words the player added. */
   extra: string[];
 }
 
@@ -24,7 +18,15 @@ export function tokenize(text: string): string[] {
   return text.split(/\s+/).filter(Boolean);
 }
 
-/** Levenshtein alignment over word tokens. Substitutions become typos. */
+const NEAR_MISS_MAX_CHAR_EDITS = 3;
+const NEAR_MISS_COST = 1;
+const UNRELATED_WORD_COST = 1.6;
+
+function substitutionCost(targetWord: string, typedWord: string): number {
+  if (targetWord === typedWord) return 0;
+  return charDistance(targetWord, typedWord) <= NEAR_MISS_MAX_CHAR_EDITS ? NEAR_MISS_COST : UNRELATED_WORD_COST;
+}
+
 export function diffPrompt(typedText: string, targetText: string): PromptDiff {
   const a = tokenize(targetText);
   const b = tokenize(typedText);
@@ -35,10 +37,7 @@ export function diffPrompt(typedText: string, targetText: string): PromptDiff {
   );
   for (let i = 1; i <= n; i++) {
     for (let j = 1; j <= m; j++) {
-      const same = norm(a[i - 1]!) === norm(b[j - 1]!);
-      // A near miss (same first letter or one edit apart) aligns as a substitution
-      // more cheaply than an unrelated word, so "sidbar" lines up with "sidebar".
-      const sub = same ? 0 : charDistance(norm(a[i - 1]!), norm(b[j - 1]!)) <= 3 ? 1 : 1.6;
+      const sub = substitutionCost(norm(a[i - 1]!), norm(b[j - 1]!));
       cost[i]![j] = Math.min(
         cost[i - 1]![j - 1]! + sub,
         cost[i - 1]![j]! + 1,
@@ -53,8 +52,8 @@ export function diffPrompt(typedText: string, targetText: string): PromptDiff {
   let j = m;
   while (i > 0 || j > 0) {
     if (i > 0 && j > 0) {
-      const same = norm(a[i - 1]!) === norm(b[j - 1]!);
-      const sub = same ? 0 : charDistance(norm(a[i - 1]!), norm(b[j - 1]!)) <= 3 ? 1 : 1.6;
+      const sub = substitutionCost(norm(a[i - 1]!), norm(b[j - 1]!));
+      const same = sub === 0;
       if (cost[i]![j] === cost[i - 1]![j - 1]! + sub) {
         if (!same) typos.unshift({ target: strip(a[i - 1]!), typed: strip(b[j - 1]!) || b[j - 1]! });
         i--;
@@ -112,7 +111,6 @@ const pascal = (word: string) =>
 
 const looksLikeCode = (word: string) => /[./_`$]|[a-z][A-Z]|\d/.test(word);
 
-/** Which typo the agent obsesses over: the longest, most identifier-like one. */
 function headlineTypo(typos: WordTypo[]): WordTypo {
   return [...typos].sort(
     (x, y) =>
@@ -128,12 +126,11 @@ const SIGNOFF: Record<PersonaKey, string[]> = {
 };
 
 export interface AgentReply extends ScriptedReply {
-  /** Files for the changed-files card, with a split of the diff. */
   files: { path: string; additions: number; deletions: number }[];
   literal: boolean;
 }
 
-function filesFor(tools: ToolRow[], diff: readonly [number, number] | null) {
+function filesFor(tools: ToolRow[], diff: LineCounts | null) {
   if (!diff) return [];
   const paths = [...new Set(tools.filter(([type]) => type === "edit").map(([, label]) => label))];
   if (paths.length === 0) return [];
@@ -155,7 +152,6 @@ function replaceWord(label: string, typo: WordTypo): string {
   return label.replace(new RegExp(escaped, "gi"), typo.typed);
 }
 
-/** The reply the agent gives. Clean prompts get the scripted reply. */
 export function buildReply(
   clean: ScriptedReply,
   diff: PromptDiff,
@@ -244,7 +240,7 @@ export function buildReply(
   const signoff = SIGNOFF[persona] ?? ["Done. Probably."];
   lines.push(signoff[seed % signoff.length]!);
 
-  const outDiff: readonly [number, number] | null =
+  const outDiff: LineCounts | null =
     added > 0 || removed > 0 ? [added, removed] : null;
   const typedTools = tools.filter(([type]) => isTool(type));
   return {

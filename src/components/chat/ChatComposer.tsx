@@ -1,7 +1,3 @@
-// Static rebuild of T3 Code's ChatComposer (chat/ChatComposer.tsx,
-// ComposerSurface.tsx, ComposerPrimaryActions.tsx) and BranchToolbar's context
-// strip. The editor shows the next prompt as ghost text and overlays what the
-// player typed: correct characters in the text color, wrong ones in red.
 import { FolderIcon, GitBranchIcon, PaperclipIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { personOf, sourceAuthor, threadBranch, type PromptDef } from "~/content/prompts";

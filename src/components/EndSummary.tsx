@@ -1,4 +1,3 @@
-// The end screen, drawn as one more agent turn in the timeline.
 import { CircleCheckIcon, ClockIcon, KeyboardIcon, RotateCcwIcon, SpellCheckIcon } from "lucide-react";
 import { computeStats, restart, type GameState } from "~/game/store";
 import { formatDuration } from "~/lib/time";

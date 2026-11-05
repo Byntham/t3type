@@ -1,4 +1,3 @@
-// From T3 Code components/ui/button.tsx (MIT). Base UI useRender dropped; plain <button>.
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cn } from "~/lib/utils";

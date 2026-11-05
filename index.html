@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>t3type</title>
     <script>
-      // Match T3 Code: the .dark class on <html> drives the dark variant.
       (function () {
         var q = new URLSearchParams(location.search).get("theme");
         var dark = q ? q === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;

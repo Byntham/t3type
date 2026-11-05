@@ -1,5 +1,3 @@
-// From T3 Code chat/ComposerControl.tsx, ProviderModelPicker.tsx, EffortGlyph.tsx,
-// ComposerFooterControls.tsx and runtimeModeConfig.ts (MIT). Static triggers only.
 import { PenLineIcon, ShieldOffIcon } from "lucide-react";
 import type { ComponentProps, ComponentType, SVGProps } from "react";
 import { threadProvider, type PersonaKey, type ThreadDef } from "~/content/prompts";
@@ -95,7 +93,6 @@ export function EffortGlyph(props: { count: number; filled: number }) {
   );
 }
 
-/** The composer's model picker trigger: provider icon, model name, effort bars. */
 export function ProviderModelPicker({ thread }: { thread: ThreadDef }) {
   const Icon = providerIcon(threadProvider(thread));
   return (
@@ -132,7 +129,6 @@ const RUNTIME_MODE: Record<PersonaKey, RuntimeMode> = {
   maria: { label: "Full access", description: "Allow commands and edits without prompts.", icon: ShieldOffIcon },
 };
 
-/** The permissions chip, shown in the context strip like a new thread in T3 Code. */
 export function ComposerPermissionsChip({ persona }: { persona: PersonaKey }) {
   const mode = RUNTIME_MODE[persona] ?? FULL_ACCESS;
   return (

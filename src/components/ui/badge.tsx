@@ -1,4 +1,3 @@
-// From T3 Code components/ui/badge.tsx (MIT).
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cn } from "~/lib/utils";
@@ -17,7 +16,6 @@ const badgeVariants = cva(
         default:
           "h-5.5 min-w-5.5 px-[calc(--spacing(1)-1px)] text-sm sm:h-4.5 sm:min-w-4.5 sm:text-xs",
         lg: "h-6.5 min-w-6.5 px-[calc(--spacing(1.5)-1px)] text-base sm:h-5.5 sm:min-w-5.5 sm:text-sm",
-        // Fractional leading rounds font metrics and raises fixed-height labels, especially under zoom.
         sm: "h-5 min-w-5 rounded-[.25rem] px-[calc(--spacing(1)-1px)] text-xs leading-none sm:h-4 sm:min-w-4 sm:text-[.625rem]",
       },
       variant: {

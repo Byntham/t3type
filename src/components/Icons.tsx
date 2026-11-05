@@ -1,4 +1,3 @@
-// Copied from T3 Code components/Icons.tsx and T3Wordmark.tsx (MIT).
 import type { SVGProps } from "react";
 import { BotIcon } from "lucide-react";
 import { cn } from "~/lib/utils";
@@ -42,7 +41,6 @@ export const ClaudeAI: Icon = ({ className, ...props }) => (
   </svg>
 );
 
-/** Provider mark for a thread. Models without a bundled logo get a neutral bot icon. */
 export function providerIcon(kind: "claude" | "codex" | "other"): Icon {
   if (kind === "claude") return ClaudeAI;
   if (kind === "codex") return OpenAI;

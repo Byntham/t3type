@@ -1,5 +1,3 @@
-// From T3 Code AppSidebarLayout.tsx and ui/sidebar.tsx (MIT): the wrapper, the
-// fixed left sidebar container, and the floating sidebar trigger.
 import { PanelLeftCloseIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "./ui/button";

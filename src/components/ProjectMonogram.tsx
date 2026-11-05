@@ -1,7 +1,5 @@
-// From T3 Code ProjectMonogram.tsx, projectIdentity.ts and projectIconColors.ts (MIT).
 import { cn } from "~/lib/utils";
 
-// Full class strings so Tailwind sees them.
 const COLORS = [
   "text-gray-600 dark:text-gray-400",
   "text-red-600 dark:text-red-400",

@@ -1,15 +1,14 @@
-// All game state lives here. Components read it with useGame() and call the
-// actions. Nothing talks to a server.
 import { useSyncExternalStore } from "react";
 import { drawThreads, type PromptDef, type ThreadDef } from "~/content/prompts";
 import { buildReply, diffPrompt, type AgentReply, type PromptDiff } from "./typos";
 
-/** One prompt's typing test: first keystroke to Enter, real time. */
+export type GameMs = number;
+export type RealMs = number;
+
 export interface PromptResult {
   wpm: number;
   accuracy: number;
-  ms: number;
-  /** Characters typed that match the target at the same position. */
+  ms: RealMs;
   correctChars: number;
 }
 
@@ -21,9 +20,8 @@ export interface Turn {
   typed: string;
   diff: PromptDiff;
   reply: AgentReply;
-  /** Game clock, ms. */
-  startedAt: number;
-  durationMs: number;
+  startedAt: GameMs;
+  durationMs: GameMs;
   done: boolean;
 }
 
@@ -31,32 +29,26 @@ export interface ThreadState {
   def: ThreadDef;
   turns: Turn[];
   draft: string;
-  /** Real ms spent typing the current draft. Time in other threads does not count. */
-  draftMs: number;
-  /** Real time of the last key in this draft, or null when the clock is paused. */
-  draftLastKeyAt: number | null;
+  draftMs: RealMs;
+  draftLastKeyAt: RealMs | null;
   draftKeys: number;
   draftCorrectKeys: number;
-  /** A finished turn the player has not looked at yet. T3 Code shows "Done". */
   unread: boolean;
-  /** Game clock, ms. Drives the sidebar's relative time. */
-  updatedAt: number;
-  /** Game clock, ms. Set when a finished thread moves to the Settled shelf. */
-  settledAt: number | null;
+  updatedAt: GameMs;
+  settledAt: GameMs | null;
 }
 
 export interface Session {
   status: "ready" | "playing" | "ended";
-  startedAt: number | null;
-  endedAt: number | null;
+  startedAt: GameMs | null;
+  endedAt: GameMs | null;
   endReason: "done" | null;
   keystrokes: number;
   correctKeystrokes: number;
   promptsSent: number;
   typosLiteral: number;
-  /** Integral of running agents over game time, in agent-ms. */
-  agentMs: number;
-  lastSampleAt: number | null;
+  runningAgentMs: GameMs;
+  lastSampleAt: GameMs | null;
   peakAgents: number;
 }
 
@@ -64,29 +56,24 @@ export interface GameState {
   threads: ThreadState[];
   activeId: string;
   session: Session;
-  now: number;
+  now: GameMs;
 }
 
 const params = new URLSearchParams(typeof location === "undefined" ? "" : location.search);
-/** ?speed=10 runs the game clock 10x, for tests. */
 const SPEED = Math.max(0.1, Number(params.get("speed") ?? 1) || 1);
 const DRAFT_SLACK = 24;
-/** Real ms a finished thread stays in place before it settles, so the final reply can be read. */
 const SETTLE_DELAY_MS = 1800;
 
-/** ?seed=N picks the same threads every time, for tests. Otherwise each session draws fresh. */
 const seedParam = params.get("seed");
 let sessionSeed = seedParam !== null && seedParam !== "" ? Number(seedParam) : Math.floor(Math.random() * 1e9);
-/** ?core=N threads from each of the core three, ?guests=N threads from mutuals. */
-const PER_CORE = Math.max(1, Number(params.get("core") ?? 2) || 2);
-const GUESTS = Math.max(0, Number(params.get("guests") ?? 3));
+const THREADS_PER_CORE_PERSONA = Math.max(1, Number(params.get("core") ?? 2) || 2);
+const GUEST_THREADS = Math.max(0, Number(params.get("guests") ?? 3));
 
 const realStart = Date.now();
 const clock = () => realStart + (Date.now() - realStart) * SPEED;
 
 function seededThreads(now: number, defs: ThreadDef[]): ThreadState[] {
-  // Spread past activity so the sidebar shows believable relative times.
-  const ages = [12, 47, 95, 180, 300, 26 * 60, 50 * 60, 3 * 24 * 60, 6 * 24 * 60];
+  const minutesSinceLastActivity = [12, 47, 95, 180, 300, 26 * 60, 50 * 60, 3 * 24 * 60, 6 * 24 * 60];
   return defs.map((def, index) => ({
     def,
     turns: [],
@@ -96,7 +83,7 @@ function seededThreads(now: number, defs: ThreadDef[]): ThreadState[] {
     draftKeys: 0,
     draftCorrectKeys: 0,
     unread: false,
-    updatedAt: now - (ages[index % ages.length] ?? 60) * 60_000,
+    updatedAt: now - (minutesSinceLastActivity[index % minutesSinceLastActivity.length] ?? 60) * 60_000,
     settledAt: null,
   }));
 }
@@ -111,7 +98,7 @@ function freshSession(): Session {
     correctKeystrokes: 0,
     promptsSent: 0,
     typosLiteral: 0,
-    agentMs: 0,
+    runningAgentMs: 0,
     lastSampleAt: null,
     peakAgents: 0,
   };
@@ -119,7 +106,7 @@ function freshSession(): Session {
 
 function initialState(): GameState {
   const now = clock();
-  const defs = drawThreads(sessionSeed, PER_CORE, GUESTS);
+  const defs = drawThreads(sessionSeed, THREADS_PER_CORE_PERSONA, GUEST_THREADS);
   return { threads: seededThreads(now, defs), activeId: defs[0]!.id, session: freshSession(), now };
 }
 
@@ -143,8 +130,6 @@ export function useGame(): GameState {
 export function getState(): GameState {
   return state;
 }
-
-// Derived helpers
 
 export function isWorking(thread: ThreadState): boolean {
   const last = thread.turns.at(-1);
@@ -176,9 +161,7 @@ export function activeThread(s: GameState = state): ThreadState {
 }
 
 export interface Stats {
-  /** Average over sent prompts, weighted by length. */
   wpm: number;
-  /** The open thread's draft while typing, else its last sent prompt. Null before either. */
   liveWpm: number | null;
   bestWpm: number;
   best: { wpm: number; text: string; thread: string } | null;
@@ -197,7 +180,6 @@ export function wpmOf(correctChars: number, ms: number): number {
   return correctChars / 5 / (Math.max(ms, MIN_TEST_MS) / 60_000);
 }
 
-/** Characters in `typed` that match `target` at the same position. */
 export function correctCharsOf(typed: string, target: string): number {
   let n = 0;
   for (let i = 0; i < typed.length && i < target.length; i++) if (typed[i] === target[i]) n++;
@@ -233,27 +215,26 @@ export function computeStats(s: GameState = state): Stats {
     accuracy,
     promptsSent: session.promptsSent,
     typosLiteral: session.typosLiteral,
-    parallelism: elapsedMs > 0 ? session.agentMs / elapsedMs : 0,
+    parallelism: elapsedMs > 0 ? session.runningAgentMs / elapsedMs : 0,
     peakAgents: session.peakAgents,
     elapsedMs,
     threadsDone: s.threads.filter(isComplete).length,
   };
 }
 
-// Clock
+function sampleRunningAgents(session: Session, threads: ThreadState[], now: GameMs): Session {
+  if (session.status !== "playing" || session.lastSampleAt === null) return session;
+  const running = runningCount(threads);
+  return {
+    ...session,
+    runningAgentMs: session.runningAgentMs + running * Math.max(0, now - session.lastSampleAt),
+    lastSampleAt: now,
+  };
+}
 
-function advance(s: GameState, now: number): GameState {
+function advance(s: GameState, now: GameMs): GameState {
   let changed = false;
-  let session = s.session;
-  // Integrate running agents up to now, before any turn finishes.
-  if (session.status === "playing" && session.lastSampleAt !== null) {
-    const running = runningCount(s.threads);
-    session = {
-      ...session,
-      agentMs: session.agentMs + running * Math.max(0, now - session.lastSampleAt),
-      lastSampleAt: now,
-    };
-  }
+  const session = sampleRunningAgents(s.session, s.threads, now);
   const threads = s.threads.map((thread) => {
     const last = thread.turns.at(-1);
     if (!last || last.done || now < last.startedAt + last.durationMs) return thread;
@@ -274,12 +255,7 @@ function advance(s: GameState, now: number): GameState {
   return next;
 }
 
-/**
- * Auto-settle, like T3 Code's settleAndAdvance: a thread with no prompts left
- * moves to the Settled shelf once its last reply has been up for a moment.
- * If it was the open thread, navigation moves forward to the next one.
- */
-function autoSettle(s: GameState, now: number): GameState {
+function autoSettle(s: GameState, now: GameMs): GameState {
   const delay = SETTLE_DELAY_MS * SPEED;
   const ready = s.threads.filter((thread) => {
     if (isSettled(thread) || !isComplete(thread)) return false;
@@ -295,13 +271,13 @@ function autoSettle(s: GameState, now: number): GameState {
     ),
   };
   if (readyIds.has(s.activeId)) {
-    const target = forwardTarget(next);
+    const target = nextThreadNeedingPlayer(next);
     if (target) next = withSelected(next, target);
   }
   return next;
 }
 
-function endSession(s: GameState, reason: "done", at: number): GameState {
+function endSession(s: GameState, reason: "done", at: GameMs): GameState {
   return {
     ...s,
     session: { ...s.session, status: "ended", endReason: reason, endedAt: at, lastSampleAt: null },
@@ -312,14 +288,11 @@ if (typeof window !== "undefined") {
   window.setInterval(() => set(advance(state, clock())), 200);
 }
 
-// Actions
-
 function updateThread(s: GameState, id: string, fn: (thread: ThreadState) => ThreadState) {
   return { ...s, threads: s.threads.map((thread) => (thread.def.id === id ? fn(thread) : thread)) };
 }
 
-/** Adds the time since the last key in this draft. The first key starts the clock. */
-function tick(thread: ThreadState, real: number): ThreadState {
+function addTimeSinceLastKey(thread: ThreadState, real: RealMs): ThreadState {
   const gap = thread.draftLastKeyAt === null ? 0 : real - thread.draftLastKeyAt;
   return { ...thread, draftMs: thread.draftMs + gap, draftLastKeyAt: real };
 }
@@ -328,7 +301,7 @@ function canType(thread: ThreadState): boolean {
   return state.session.status !== "ended" && awaitingInput(thread);
 }
 
-function startIfReady(s: GameState, now: number): GameState {
+function startIfReady(s: GameState, now: GameMs): GameState {
   if (s.session.status !== "ready") return s;
   return { ...s, session: { ...s.session, status: "playing", startedAt: now, lastSampleAt: now } };
 }
@@ -351,7 +324,7 @@ export function typeChar(ch: string) {
     },
   };
   set(updateThread(s, thread.def.id, (t) => ({
-    ...tick(t, real),
+    ...addTimeSinceLastKey(t, real),
     draft: t.draft + ch,
     draftKeys: t.draftKeys + 1,
     draftCorrectKeys: t.draftCorrectKeys + (correct ? 1 : 0),
@@ -362,7 +335,7 @@ export function backspace(word = false) {
   const thread = activeThread();
   if (!canType(thread) || thread.draft.length === 0) return;
   const draft = word ? thread.draft.replace(/\S+\s*$|\s+$/, "") : thread.draft.slice(0, -1);
-  set(updateThread(state, thread.def.id, (t) => ({ ...tick(t, Date.now()), draft })));
+  set(updateThread(state, thread.def.id, (t) => ({ ...addTimeSinceLastKey(t, Date.now()), draft })));
 }
 
 export function send() {
@@ -371,7 +344,7 @@ export function send() {
   if (!prompt || !canType(thread) || thread.draft.trim().length === 0) return;
   const now = clock();
   let s = startIfReady(advance(state, now), now);
-  const timed = tick(thread, Date.now());
+  const timed = addTimeSinceLastKey(thread, Date.now());
   const correctChars = correctCharsOf(thread.draft.trim(), prompt.text);
   const result: PromptResult = {
     wpm: Math.round(wpmOf(correctChars, timed.draftMs)),
@@ -416,9 +389,12 @@ export function send() {
   set(s);
 }
 
+function pauseDraftClocks(threads: ThreadState[]): ThreadState[] {
+  return threads.map((t) => (t.draftLastKeyAt === null ? t : { ...t, draftLastKeyAt: null }));
+}
+
 function withSelected(s: GameState, id: string): GameState {
-  // Leaving a thread pauses its draft clock, so time away never counts.
-  const paused = { ...s, threads: s.threads.map((t) => (t.draftLastKeyAt === null ? t : { ...t, draftLastKeyAt: null })) };
+  const paused = { ...s, threads: pauseDraftClocks(s.threads) };
   return updateThread({ ...paused, activeId: id }, id, (t) => ({ ...t, unread: false }));
 }
 
@@ -427,8 +403,7 @@ export function selectThread(id: string) {
   set(withSelected(state, id));
 }
 
-/** Sidebar order, without settled threads: projects by first appearance, threads in file order. */
-function orderedIds(s: GameState = state): string[] {
+function unsettledIdsInSidebarOrder(s: GameState = state): string[] {
   const open = s.threads.filter((t) => !isSettled(t) || t.def.id === s.activeId);
   const projects = [...new Set(open.map((t) => t.def.project))];
   return projects.flatMap((project) =>
@@ -436,12 +411,8 @@ function orderedIds(s: GameState = state): string[] {
   );
 }
 
-/**
- * The thread to move to from the active one: the next thread waiting on the
- * player (unread first), else the next running one. Null if there is none.
- */
-function forwardTarget(s: GameState): string | null {
-  const ids = orderedIds(s);
+function nextThreadNeedingPlayer(s: GameState): string | null {
+  const ids = unsettledIdsInSidebarOrder(s);
   const start = ids.indexOf(s.activeId);
   const rotated = [...ids.slice(start + 1), ...ids.slice(0, start + 1)].filter((id) => id !== s.activeId);
   const byId = new Map(s.threads.map((t) => [t.def.id, t]));
@@ -454,21 +425,18 @@ function forwardTarget(s: GameState): string | null {
   );
 }
 
-/** thread.next / thread.previous: mod+shift+] and mod+shift+[ in T3 Code. */
 export function cycleThread(direction: 1 | -1) {
-  const ids = orderedIds();
+  const ids = unsettledIdsInSidebarOrder();
   const index = ids.indexOf(state.activeId);
   selectThread(ids[(index + direction + ids.length) % ids.length]!);
 }
 
-/** Tab: the next thread waiting on the player, unread first, else a running one. */
 export function nextWaitingThread() {
-  const pick = forwardTarget(state);
+  const pick = nextThreadNeedingPlayer(state);
   if (pick) selectThread(pick);
 }
 
 export function restart() {
-  // A new session draws a new set of threads.
   sessionSeed += 1;
   set(initialState());
 }
