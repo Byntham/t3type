@@ -33,7 +33,8 @@ every push and pull request.
   like T3 Code's thread.next and thread.previous.
 - Every prompt is its own WPM test, timed from its first key to its last. Time spent in other
   threads does not count. Each sent message shows its WPM and accuracy.
-- A session ends when every thread is done.
+- When a thread's last reply finishes, read it, then press Enter to settle the thread and move on.
+- A session ends when you settle the last thread.
 
 ## Content
 

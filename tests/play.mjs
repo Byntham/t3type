@@ -103,6 +103,10 @@ async function playFullSessionInDark(browser) {
       if (switched.activeId !== thread.def.id && !previous.turns.at(-1).done) switchesWhileRunning += 1;
       continue;
     }
+    if (!busy && !prompt && thread.settledAt === null) {
+      await page.keyboard.press("Enter");
+      continue;
+    }
     await page.keyboard.press("Tab");
     const next = await state(page);
     if (next.activeId === s.activeId) await page.waitForTimeout(150);
@@ -128,23 +132,31 @@ async function playFullSessionInDark(browser) {
   await page.close();
 }
 
-async function checkAutoSettle(browser) {
+async function checkEnterSettles(browser) {
   const { page, errors } = await openPage(browser, "dark", "speed=4");
   const s0 = await state(page);
   const first = activeOf(s0);
+  const lastDone = (id) => {
+    const t = window.__game.state().threads.find((x) => x.def.id === id);
+    return t.turns.length === 0 || t.turns.at(-1).done;
+  };
   for (const prompt of first.def.prompts) {
-    await page.waitForFunction((id) => {
-      const t = window.__game.state().threads.find((x) => x.def.id === id);
-      return t.turns.length === 0 || t.turns.at(-1).done;
-    }, first.def.id);
+    await page.waitForFunction(lastDone, first.def.id);
     await page.keyboard.type(prompt.text);
     await page.keyboard.press("Enter");
   }
-  await page.waitForFunction((id) => window.__game.state().activeId !== id, first.def.id, { timeout: 15_000 });
+  await page.waitForFunction(lastDone, first.def.id, { timeout: 20_000 });
+  await page.waitForTimeout(3000);
+  const waited = await state(page);
+  const finished = waited.threads.find((t) => t.def.id === first.def.id);
+  check(waited.activeId === first.def.id, "a finished thread stays open until Enter");
+  check(finished.settledAt === null, "a finished thread does not settle on its own");
+  check((await page.locator("[data-assistant-message]").count()) > 0, "the final reply stays on screen");
+  await page.keyboard.press("Enter");
   const s1 = await state(page);
   const settled = s1.threads.find((t) => t.def.id === first.def.id);
-  check(settled.settledAt !== null, "finished thread auto-settles");
-  check(s1.activeId !== first.def.id, `navigation moved forward on its own (to ${s1.activeId})`);
+  check(settled.settledAt !== null, "Enter settles a finished thread");
+  check(s1.activeId !== first.def.id, `Enter moves to the next thread (to ${s1.activeId})`);
   const header = await page.locator('[data-testid="sidebar-settled-header"]').textContent();
   check(/1/.test(header ?? ""), `Settled shelf shows 1 (got "${header?.trim()}")`);
   await page.keyboard.press("Tab");
@@ -305,7 +317,7 @@ try {
   await checkWrongKeysShowExpectedText(browser);
   await checkWordsStayPutWhileTyping(browser);
   await playFullSessionInDark(browser);
-  await checkAutoSettle(browser);
+  await checkEnterSettles(browser);
   await checkPerPromptWpmInLight(browser);
   await checkComposerFontSize(browser);
 } finally {

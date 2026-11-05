@@ -4,11 +4,14 @@ import { ChatView } from "./components/ChatView";
 import { ThreadSidebar } from "./components/Sidebar";
 import {
   backspace,
+  activeThread,
   cycleThread,
   getState,
+  isComplete,
   nextWaitingThread,
   restart,
   send,
+  settleActive,
   typeChar,
   useGame,
 } from "./game/store";
@@ -38,7 +41,9 @@ function onKeyDown(event: KeyboardEvent) {
   }
   if (event.key === "Enter") {
     event.preventDefault();
-    if (!event.shiftKey) send();
+    if (event.shiftKey) return;
+    if (isComplete(activeThread())) settleActive();
+    else send();
     return;
   }
   if (event.key === "Backspace") {
