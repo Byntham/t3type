@@ -1,0 +1,680 @@
+{
+  "about": "Threads for t3type. kind=real prompts are verbatim and sourced (see t3-voices.json). kind=parody prompts are written by us in the style of each person and must be labeled as parody in the game.",
+  "people": {
+    "theo": {
+      "name": "Theo",
+      "handle": "@theo"
+    },
+    "julius": {
+      "name": "Julius",
+      "handle": "@jullerino"
+    },
+    "maria": {
+      "name": "Maria",
+      "handle": "@maria_rcks"
+    }
+  },
+  "threads": [
+    {
+      "id": "theo-trim",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Trim the system prompt",
+      "model": "Claude Opus 5.5",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "our system prompt is 14k tokens and half of it is vibes. find the dead weight",
+          "reply": {
+            "text": "Read the system prompt. About 6.1k tokens are instructions no eval exercises, including three separate paragraphs asking the model to be concise.",
+            "tools": [
+              [
+                "read",
+                "apps/server/src/prompts/system.md"
+              ],
+              [
+                "search",
+                "\"be concise\" in prompts/"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "real",
+          "text": "tell Opus to trim until it uses 50% less context without any regressions in the eval",
+          "sourceUrl": "https://x.com/theo/status/2114955695434993702",
+          "reply": {
+            "text": "Trimmed in four passes. Context is down 52%. The eval passes 80 of 80 cases. I kept the paragraph about not deleting tests.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/prompts/system.md"
+              ],
+              [
+                "bash",
+                "pnpm eval --suite system-prompt"
+              ]
+            ],
+            "diff": [
+              12,
+              211
+            ],
+            "seconds": 6
+          },
+          "sourceId": "theo-p-004"
+        },
+        {
+          "kind": "parody",
+          "text": "insane. ship it to nightly before anyone on the team can review it",
+          "reply": {
+            "text": "Pushed to nightly. Julius has been added as a reviewer anyway because CODEOWNERS says so.",
+            "tools": [
+              [
+                "bash",
+                "git push origin HEAD:nightly"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "theo-codex-model",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Codex doesn't know its own model",
+      "model": "GPT-6.1 Sol",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "what model are you. not the family. the actual model id",
+          "reply": {
+            "text": "I am based on GPT-6. I do not have access to my exact model id from inside this session.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "it is so stupid that this still is not in your system prompt. inject the current model into it from our side",
+          "reply": {
+            "text": "Added the selected model id and effort level to the session preamble for every provider.",
+            "tools": [
+              [
+                "read",
+                "packages/provider-core/src/session.ts"
+              ],
+              [
+                "edit",
+                "packages/provider-core/src/preamble.ts"
+              ]
+            ],
+            "diff": [
+              31,
+              4
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "real",
+          "text": "When you are done designing the API, get a second opinion from Opus with 'claude -p'",
+          "sourceUrl": "https://x.com/theo/status/2068595585121484866",
+          "reply": {
+            "text": "Asked Opus for a review. It flagged one real issue, a missing effort field on resume, and three style nits I ignored.",
+            "tools": [
+              [
+                "bash",
+                "claude -p \"review packages/provider-core/src/preamble.ts\""
+              ],
+              [
+                "edit",
+                "packages/provider-core/src/resume.ts"
+              ]
+            ],
+            "diff": [
+              8,
+              2
+            ],
+            "seconds": 6
+          },
+          "sourceId": "theo-p-001"
+        },
+        {
+          "kind": "parody",
+          "text": "ok now do you know what model you are",
+          "reply": {
+            "text": "Yes. I am GPT-6.1 Sol on high effort, running inside T3 Code.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "theo-gray",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Sidebar regressions",
+      "model": "Claude Opus 5.5",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "the sidebar got 40ms slower when you open a project with 300 threads. measure it before you touch anything",
+          "reply": {
+            "text": "Profiled the sidebar with 300 threads. Opening the project costs 41ms, and 33ms of it is sorting thread rows on every render.",
+            "tools": [
+              [
+                "bash",
+                "pnpm bench sidebar --threads 300"
+              ],
+              [
+                "read",
+                "apps/web/src/components/Sidebar.logic.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "sort once when the list changes, not on every render. smallest possible diff",
+          "reply": {
+            "text": "Moved the sort into the store selector. Opening the project now costs 7ms.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/components/Sidebar.logic.ts"
+              ],
+              [
+                "bash",
+                "pnpm bench sidebar --threads 300"
+              ]
+            ],
+            "diff": [
+              9,
+              14
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "real",
+          "text": "make t3 a wall of gray, make no mistakes",
+          "sourceUrl": "https://x.com/jullerino/status/2114567878829883488",
+          "credit": "Julius's joke about what Theo sends after UI regressions",
+          "reply": {
+            "text": "Set every surface token to the same gray. Contrast checks now fail on 214 elements. No mistakes were made.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/index.css"
+              ]
+            ],
+            "diff": [
+              3,
+              38
+            ],
+            "seconds": 4
+          },
+          "sourceId": "julius-p-joke-001"
+        }
+      ]
+    },
+    {
+      "id": "julius-mobile",
+      "persona": "julius",
+      "project": "t3code-mobile",
+      "title": "Android nav rail complaints",
+      "model": "Claude Opus 5.5",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "people say the android nav rail looks weird. it is literally the stock compose NavigationRail. check if we changed anything",
+          "reply": {
+            "text": "Checked. The nav rail is the stock component with default styling. The only change is the icon size, which matches the spec.",
+            "tools": [
+              [
+                "search",
+                "NavigationRail in apps/mobile/"
+              ],
+              [
+                "read",
+                "apps/mobile/src/navigation/Rail.tsx"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok add a one ui style option for the people who hate material. dont touch the default",
+          "reply": {
+            "text": "Added a One UI style option under Appearance. The default is still Material.",
+            "tools": [
+              [
+                "edit",
+                "apps/mobile/src/navigation/Rail.tsx"
+              ],
+              [
+                "edit",
+                "apps/mobile/src/settings/appearance.ts"
+              ]
+            ],
+            "diff": [
+              96,
+              3
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "hmm the settings screen has every desktop toggle. mobile doesnt need half of these, list what makes no sense on a phone",
+          "reply": {
+            "text": "Eleven settings only make sense on desktop, including window blur, terminal font ligatures, and the dock icon behavior.",
+            "tools": [
+              [
+                "read",
+                "apps/mobile/src/settings/index.tsx"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "hide those on mobile. if someone asks why, its intentional",
+          "reply": {
+            "text": "Hid the eleven desktop-only settings on mobile and added a comment saying it is intentional.",
+            "tools": [
+              [
+                "edit",
+                "apps/mobile/src/settings/index.tsx"
+              ]
+            ],
+            "diff": [
+              14,
+              2
+            ],
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "julius-weekend",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Monday cleanup",
+      "model": "GPT-6.1 Sol",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "theo pushed a bunch of stuff to main over the weekend. list every commit since friday that has no tests",
+          "reply": {
+            "text": "Found 23 commits since Friday. 17 have no tests. Most of them are titled \"fix\".",
+            "tools": [
+              [
+                "bash",
+                "git log --since=friday --author=theo --stat"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "okay a lot of it is good tbh. find the ones that actually regressed something",
+          "reply": {
+            "text": "Two regressed. One broke thread restore after updates. One made the sidebar art render twice in light mode.",
+            "tools": [
+              [
+                "bash",
+                "pnpm test --changed-since friday"
+              ],
+              [
+                "read",
+                "apps/web/src/threadSync.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "fix both with tests. dont rewrite anything else even if it looks like slop",
+          "reply": {
+            "text": "Fixed both regressions and added a test for each. I left the rest alone.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/threadSync.ts"
+              ],
+              [
+                "edit",
+                "apps/web/src/threadSync.test.ts"
+              ],
+              [
+                "bash",
+                "pnpm test"
+              ]
+            ],
+            "diff": [
+              41,
+              6
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "real",
+          "text": "Draft release notes for v1.4.2 in pingdotgg/t3code",
+          "sourceUrl": "https://x.com/jullerino/status/2107511530766135476",
+          "reply": {
+            "text": "Drafted notes for v1.4.2. Two fixes, one under \"Thread restore\" and one under \"Themes\".",
+            "tools": [
+              [
+                "bash",
+                "git log v1.4.1..HEAD --oneline"
+              ],
+              [
+                "edit",
+                "RELEASE_NOTES.md"
+              ]
+            ],
+            "diff": [
+              18,
+              0
+            ],
+            "seconds": 4
+          },
+          "sourceId": "julius-p-002"
+        }
+      ]
+    },
+    {
+      "id": "julius-ratelimit",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "GitHub rate limits",
+      "model": "Claude Opus 5.5",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "we keep hitting the 5k req/hr github limit when someone has 40 PRs open. figure out what we are spamming",
+          "reply": {
+            "text": "PR status polling makes one request per PR every 15 seconds, even when the window is in the background.",
+            "tools": [
+              [
+                "search",
+                "octokit in apps/server/src/"
+              ],
+              [
+                "read",
+                "apps/server/src/vcs/prStatus.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "batch it into one graphql query and back off when the app is not focused",
+          "reply": {
+            "text": "Replaced per-PR polling with one GraphQL query. It backs off to every 2 minutes when unfocused. Requests per hour dropped from about 9,600 to 140.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/vcs/prStatus.ts"
+              ],
+              [
+                "bash",
+                "pnpm test vcs"
+              ]
+            ],
+            "diff": [
+              62,
+              48
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "nice. this will be a fun test. open the pr but dont merge it, theo will merge it on saturday anyway",
+          "reply": {
+            "text": "Opened the PR as a draft. Auto-merge is off.",
+            "tools": [
+              [
+                "bash",
+                "gh pr create --draft"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "maria-redesign",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Redesign PR stack",
+      "model": "Claude Opus 5.5",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "hey can you split my redesign branch into a stack of small prs, one per screen?? keep each one buildable",
+          "reply": {
+            "text": "Split the branch into 6 stacked PRs, one per screen. Each one builds and passes tests on its own.",
+            "tools": [
+              [
+                "bash",
+                "git log redesign --oneline"
+              ],
+              [
+                "bash",
+                "gt split --by-commit"
+              ],
+              [
+                "bash",
+                "pnpm build"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "add before and after screenshots to every pr description pls, light and dark",
+          "reply": {
+            "text": "Captured before and after screenshots in light and dark for all 6 PRs and added them to the descriptions.",
+            "tools": [
+              [
+                "bash",
+                "pnpm screenshots --compare main"
+              ],
+              [
+                "bash",
+                "gh pr edit --body-file"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "the model picker is still bad. make it searchable and put recent models at the top",
+          "reply": {
+            "text": "The model picker now has search and a Recent section at the top.",
+            "tools": [
+              [
+                "read",
+                "apps/web/src/components/chat/ModelPickerContent.tsx"
+              ],
+              [
+                "edit",
+                "apps/web/src/components/chat/ModelPickerContent.tsx"
+              ]
+            ],
+            "diff": [
+              88,
+              21
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "WAIT it works?? NOOO WAYY. ship to nightly",
+          "reply": {
+            "text": "Shipped to nightly.",
+            "tools": [
+              [
+                "bash",
+                "git push origin HEAD:nightly"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "maria-sync",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Sync old threads",
+      "model": "Claude Opus 5.5",
+      "prompts": [
+        {
+          "kind": "real",
+          "text": "hey can you sync some old threads into this t3code instance?? add the projects and each thread into t3code",
+          "sourceUrl": "https://x.com/maria_rcks/status/2114564510946058644",
+          "reply": {
+            "text": "Found 3 projects and 58 old threads. Imported all of them. Titles and timestamps are kept.",
+            "tools": [
+              [
+                "search",
+                "*.jsonl in ~/old-sessions/"
+              ],
+              [
+                "bash",
+                "npx t3 import ~/old-sessions"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          },
+          "sourceId": "maria-p-001"
+        },
+        {
+          "kind": "parody",
+          "text": "i feel like this is a regression indicator. the import took 40s, it used to take 4",
+          "reply": {
+            "text": "Confirmed. The importer now writes each message in its own transaction. That change landed last week.",
+            "tools": [
+              [
+                "bash",
+                "git log -S transaction apps/server/src/import"
+              ],
+              [
+                "read",
+                "apps/server/src/import/threads.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "put it back in one transaction per thread. tag julius on the pr, data loading is his thing not mine",
+          "reply": {
+            "text": "Restored one transaction per thread. Import time is back to 4s. Tagged Julius on the PR.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/import/threads.ts"
+              ],
+              [
+                "bash",
+                "gh pr create --reviewer jullerino"
+              ]
+            ],
+            "diff": [
+              7,
+              19
+            ],
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "maria-opus",
+      "persona": "maria",
+      "project": "t1code",
+      "title": "Is Opus nerfed",
+      "model": "Claude Opus 5.5",
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "be honest. are you nerfed. you wrote way better code last week",
+          "reply": {
+            "text": "I can't compare myself to last week. I can rerun last week's task and diff the output.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok rerun the tui keybindings task from last week and diff it against what you wrote then",
+          "reply": {
+            "text": "Reran it. The new output differs by 4 lines, all variable names. Both versions pass the same tests.",
+            "tools": [
+              [
+                "bash",
+                "git show last-week:src/keys.ts > /tmp/old.ts"
+              ],
+              [
+                "bash",
+                "diff /tmp/old.ts src/keys.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "so the regression was me. great. use codex for the tedious part next time",
+          "reply": {
+            "text": "Noted. Tedious part goes to Codex next time.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    }
+  ]
+}
