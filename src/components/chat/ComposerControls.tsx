@@ -4,7 +4,7 @@ import { PenLineIcon, ShieldOffIcon } from "lucide-react";
 import type { ComponentProps, ComponentType, SVGProps } from "react";
 import { threadProvider, type PersonaKey, type ThreadDef } from "~/content/prompts";
 import { cn } from "~/lib/utils";
-import { ClaudeAI, OpenAI } from "../Icons";
+import { providerIcon } from "../Icons";
 
 export type ComposerControlSize = "sm" | "xs";
 
@@ -97,7 +97,7 @@ export function EffortGlyph(props: { count: number; filled: number }) {
 
 /** The composer's model picker trigger: provider icon, model name, effort bars. */
 export function ProviderModelPicker({ thread }: { thread: ThreadDef }) {
-  const Icon = threadProvider(thread) === "claude" ? ClaudeAI : OpenAI;
+  const Icon = providerIcon(threadProvider(thread));
   return (
     <ComposerControl
       aria-label={`${thread.model}, High effort`}

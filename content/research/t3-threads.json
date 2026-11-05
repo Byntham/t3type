@@ -1,5 +1,5 @@
 {
-  "about": "Threads for t3type. kind=real prompts are verbatim and sourced (see t3-voices.json). kind=parody prompts are written by us in the style of each person and must be labeled as parody in the game.",
+  "about": "Threads for swetype. kind=real prompts are verbatim and sourced. kind=parody prompts are written by us in the style of each person and are labeled as parody in the game. basis lists the real posts each parody thread riffs on. Drafts from two writers are in drafts/.",
   "people": {
     "theo": {
       "name": "Theo",
@@ -12,6 +12,26 @@
     "maria": {
       "name": "Maria",
       "handle": "@maria_rcks"
+    },
+    "tibo": {
+      "name": "Tibo",
+      "handle": "@thsottiaux"
+    },
+    "lauren": {
+      "name": "Lauren",
+      "handle": "@poteto"
+    },
+    "ben": {
+      "name": "Ben Davis",
+      "handle": "@davis7"
+    },
+    "dax": {
+      "name": "Dax",
+      "handle": "@thdxr"
+    },
+    "adam": {
+      "name": "Adam",
+      "handle": "@AdamHoltererer"
     }
   },
   "threads": [
@@ -670,6 +690,3081 @@
           "reply": {
             "text": "Noted. Tedious part goes to Codex next time.",
             "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-theo-council",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "The council",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2113565349300015227",
+        "https://x.com/theo/status/2114229780065464669",
+        "https://x.com/theo/status/2114483219538296946"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "run my council skill on this pr. opus, muse wonder full and sol all have to sign off before it merges",
+          "reply": {
+            "text": "Convened the council. Opus approved, Muse Wonder Full approved in one pleasant sentence, and Sol approved with 300 lines of suggested tests.",
+            "tools": [
+              [
+                "bash",
+                "council review --pr 4412"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "add gemini as a fourth member. it doesnt get a vote, it just gets to talk",
+          "reply": {
+            "text": "Added Gemini as a non-voting member. Its first comment quotes line 173 of a 72-line file.",
+            "tools": [
+              [
+                "edit",
+                ".agents/skills/council/SKILL.md"
+              ]
+            ],
+            "diff": [
+              14,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "rename its section to gemini the jester and track how often it makes stuff up",
+          "reply": {
+            "text": "Renamed it. Gemini made something up in 81% of runs, including two IP addresses and a CLI flag that does not exist.",
+            "tools": [
+              [
+                "edit",
+                ".agents/skills/council/SKILL.md"
+              ],
+              [
+                "bash",
+                "council stats --member gemini"
+              ]
+            ],
+            "diff": [
+              9,
+              3
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok its a liability. remove gemini from the council entirely",
+          "reply": {
+            "text": "Removed Gemini from the council. Gemini reviewed the removal PR and approved it, citing line 173.",
+            "tools": [
+              [
+                "edit",
+                ".agents/skills/council/SKILL.md"
+              ]
+            ],
+            "diff": [
+              0,
+              23
+            ],
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-theo-retriever",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Scope control",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/theo/status/2113574945053921367",
+        "https://x.com/theo/status/2116774685509874096",
+        "https://x.com/theo/status/2107789940482621795"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "look through my whole prompt history and judge me. be honest, i can take it",
+          "reply": {
+            "text": "You have strong engineering judgment, sharp product taste, and the scope control of a golden retriever that found an unlocked data center.",
+            "tools": [
+              [
+                "search",
+                "~/.codex/sessions"
+              ],
+              [
+                "read",
+                "~/.claude/projects"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "rude. when was the last time i actually stayed in scope",
+          "reply": {
+            "text": "March 14. You asked me to fix a typo in the README, and the thread ended with a Rust port of the TypeScript compiler.",
+            "tools": [
+              [
+                "search",
+                "prompt history for \"typo\""
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "fine. today we fix one bug in the composer and nothing else. stop me if i drift",
+          "reply": {
+            "text": "Understood. I will stop you if you mention Rust, npm, an operating system or a new network protocol.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "composer is fixed. random thought, how hard would a new network protocol be",
+          "reply": {
+            "text": "Stopping you as instructed. I opened your idea as a draft PR titled DO NOT MERGE.",
+            "tools": [
+              [
+                "bash",
+                "gh pr create --draft --title 'DO NOT MERGE'"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-theo-wrong-thread",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Get this merged",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2109576403171872912",
+        "https://x.com/theo/status/2109593403482948090"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "how is the ts-rust branch doing. dont merge anything, its still an experiment",
+          "reply": {
+            "text": "ts-rust typechecks the T3 Code repo 3x faster than tsgo. 41 tests still fail, and nothing is merged.",
+            "tools": [
+              [
+                "bash",
+                "pnpm typecheck --compiler ts-rust"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "lgtm, the copy fix looks good. get this merged",
+          "reply": {
+            "text": "Merged ts-rust into main. I did not see a copy fix in this thread.",
+            "tools": [
+              [
+                "bash",
+                "gh pr merge 5521 --squash"
+              ]
+            ],
+            "diff": [
+              48211,
+              3
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "WAIT. which thread is this. what did you just merge",
+          "reply": {
+            "text": "This is the ts-rust thread. You merged the PR titled DO NOT MERGE.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok has anything actually broken yet",
+          "reply": {
+            "text": "Nothing has broken in 8 hours, and CI typechecks 3x faster. I recommend keeping it.",
+            "tools": [
+              [
+                "bash",
+                "gh run list --branch main"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-theo-queue",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Kill the queue",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2109072708495655051",
+        "https://x.com/maria_rcks/status/2106156761501573267",
+        "https://x.com/daradoescode/status/2109074762458935754"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "hot take, i dont like queueing messages. models can handle a steer now. how many people use the queue",
+          "reply": {
+            "text": "31% of users queued at least one message this week. Most of them queued the word continue.",
+            "tools": [
+              [
+                "bash",
+                "slopalytics query queue_usage --days 7"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "too many to just delete it. hide it behind a setting nobody will ever find",
+          "reply": {
+            "text": "Moved Queue to Settings > Advanced > Experimental > Legacy. It is the 47th toggle on that page.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/settings/advanced.tsx"
+              ]
+            ],
+            "diff": [
+              18,
+              6
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "maria thinks queue should be removed from every harness. flip the default and credit her",
+          "reply": {
+            "text": "Flipped the default to steer. The changelog says the idea came from Maria.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/settings/defaults.ts"
+              ],
+              [
+                "edit",
+                "CHANGELOG.md"
+              ]
+            ],
+            "diff": [
+              3,
+              2
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "dara is going to post the meme about me removing features again. get ahead of it",
+          "reply": {
+            "text": "Too late. Dara posted it four minutes ago.",
+            "tools": [
+              [
+                "search",
+                "x.com/daradoescode"
+              ]
+            ],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-theo-latex",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "No LaTeX, ever",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2109543705090904237",
+        "https://x.com/theo/status/2109544074705621463",
+        "https://x.com/theo/status/2116446018506236371"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "another reply asking for latex in markdown. add a lint rule that rejects any pr that adds katex",
+          "reply": {
+            "text": "Added the lint rule. It also rejected one of Julius's PRs, which mentions KaTeX in a comment explaining why we do not use KaTeX.",
+            "tools": [
+              [
+                "edit",
+                "lint/rules/no-katex.ts"
+              ]
+            ],
+            "diff": [
+              31,
+              0
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "good. reply to the issue. polite but final",
+          "reply": {
+            "text": "Replied that there will never be native LaTeX support in T3 Code. I left out your second paragraph.",
+            "tools": [
+              [
+                "bash",
+                "gh issue comment 9120"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok maybe a math tool the agent can call. it never touches our markdown rendering. ever",
+          "reply": {
+            "text": "Added a render_math tool. Markdown rendering is unchanged, and the tool description calls the syntax cursed, as dictated.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/tools/render-math.ts"
+              ]
+            ],
+            "diff": [
+              74,
+              0
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "post it. and yes you can say i caved",
+          "reply": {
+            "text": "Drafted the post. It starts with 'Day 34/' and ends with 'I caved.'",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-theo-emdash",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Em dash regression",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2113369404994130299",
+        "https://x.com/jullerino/status/2106439841819038192"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "someone found an em dash in our copy. at t3 code we take regressions like this seriously",
+          "reply": {
+            "text": "Found one em dash on the landing page and 212 in the changelog.",
+            "tools": [
+              [
+                "search",
+                "U+2014 in apps/"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "julius says always lint rule. add noEmDashCopy and fail the build on any of them",
+          "reply": {
+            "text": "Added noEmDashCopy. The build now fails with 213 violations.",
+            "tools": [
+              [
+                "edit",
+                "lint/rules/no-em-dash-copy.ts"
+              ],
+              [
+                "bash",
+                "pnpm lint"
+              ]
+            ],
+            "diff": [
+              22,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "fix all of them. commas and periods only, keep the meaning",
+          "reply": {
+            "text": "Replaced all 213. 61 were in my own commit messages, so I also filed an issue against myself.",
+            "tools": [
+              [
+                "edit",
+                "CHANGELOG.md"
+              ],
+              [
+                "edit",
+                "apps/marketing/src/hero.tsx"
+              ]
+            ],
+            "diff": [
+              213,
+              213
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "tag julius on the pr, julius loves reviewing a lint rule",
+          "reply": {
+            "text": "Tagged Julius. Julius approved in 40 seconds and asked for a rule against en dashes too.",
+            "tools": [
+              [
+                "bash",
+                "gh pr edit --add-reviewer juliusmarminge"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-theo-babysit",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Two hundred PR watchers",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2107765823637168287",
+        "https://x.com/theo/status/2107736680413454440"
+      ],
+      "prompts": [
+        {
+          "kind": "real",
+          "text": "I want you to audit my history with Claude Code, Codex and other agents on this machine.",
+          "sourceUrl": "https://x.com/theo/status/2107765823637168287",
+          "reply": {
+            "text": "Found 11,400 threads across Claude Code, Codex and T3 Code on this machine. What should I look for?",
+            "tools": [
+              [
+                "search",
+                "~/.claude/projects"
+              ],
+              [
+                "search",
+                "~/.codex/sessions"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "real",
+          "text": "Look for every time I asked for a PR to be watched or babysat.",
+          "sourceUrl": "https://x.com/theo/status/2107765823637168287",
+          "reply": {
+            "text": "Found 214 requests. The babysitting logic was reinvented 203 times.",
+            "tools": [
+              [
+                "search",
+                "\"watch\" OR \"babysit\" in prompts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "real",
+          "text": "How many of these implementations had flaws you can see?",
+          "sourceUrl": "https://x.com/theo/status/2107765823637168287",
+          "reply": {
+            "text": "All 203 had flaws. One watched the wrong PR for six hours and reported it green.",
+            "tools": [
+              [
+                "read",
+                "scripts/watch-pr-*.sh"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "build one watcher that actually works. julius moved us off the cli, use the api directly",
+          "reply": {
+            "text": "Built one watcher on the GraphQL and REST APIs with fallbacks. It is implementation 204, and the first one with tests.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/github/pr-watcher.ts"
+              ],
+              [
+                "bash",
+                "pnpm test pr-watcher"
+              ]
+            ],
+            "diff": [
+              188,
+              9400
+            ],
+            "seconds": 6
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-julius-shims",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "One rename",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/jullerino/status/2046061247733653704",
+        "https://x.com/jullerino/status/2046061668363546941"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "rename getThreadState to readThreadState everywhere. no backwards compat shims, nothing is public",
+          "reply": {
+            "text": "Renamed it in 38 files. I kept a deprecated getThreadState alias in case anything external depends on it.",
+            "tools": [
+              [
+                "search",
+                "getThreadState"
+              ],
+              [
+                "edit",
+                "packages/contracts/src/thread.ts"
+              ]
+            ],
+            "diff": [
+              52,
+              41
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "nothing external depends on it. delete the alias and the regression test you wrote for it",
+          "reply": {
+            "text": "Deleted the alias. I kept a new test that checks the alias is gone.",
+            "tools": [
+              [
+                "edit",
+                "packages/contracts/src/thread.ts"
+              ]
+            ],
+            "diff": [
+              12,
+              9
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "why is there a test that checks a function does not exist. delete it",
+          "reply": {
+            "text": "Deleted it. I added a lint rule that bans getThreadState, plus a test for the lint rule.",
+            "tools": [
+              [
+                "edit",
+                "lint/rules/no-get-thread-state.ts"
+              ]
+            ],
+            "diff": [
+              27,
+              11
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "i am begging you. one rename. zero new files",
+          "reply": {
+            "text": "Done. One rename and zero new files, and I wrote the old name down in MIGRATION.md so it is not forgotten.",
+            "tools": [
+              [
+                "edit",
+                "MIGRATION.md"
+              ]
+            ],
+            "diff": [
+              4,
+              0
+            ],
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-julius-tests",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Unit testing dumb stuff",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/jullerino/status/2027437001562308944",
+        "https://x.com/jullerino/status/2064767773792973286",
+        "https://x.com/theo/status/2109874961070616654"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "fix the off by one in thread list pagination. small fix, dont go crazy",
+          "reply": {
+            "text": "Fixed the off-by-one. I also added 300 lines of tests, including coverage for page -4.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/thread-list/paginate.ts"
+              ],
+              [
+                "edit",
+                "apps/web/src/thread-list/paginate.test.ts"
+              ]
+            ],
+            "diff": [
+              301,
+              1
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "page -4 is not a real page. why does it have a test",
+          "reply": {
+            "text": "It is not reachable today. I wanted to be ready if it ever is.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "theo praises you every day. explain to theo why this pr has 14 test files for a one character fix",
+          "reply": {
+            "text": "Sent Theo the explanation. It is 300 lines long and has its own tests.",
+            "tools": [
+              [
+                "bash",
+                "t3 thread send --to theo"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok switching to claude for this one. clean it up",
+          "reply": {
+            "text": "This is Opus now. I deleted 13 of the 14 test files, and the one left passes.",
+            "tools": [
+              [
+                "bash",
+                "pnpm test thread-list"
+              ]
+            ],
+            "diff": [
+              0,
+              287
+            ],
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-julius-types",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Types don't exist",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/jullerino/status/2040684574741823802",
+        "https://x.com/jullerino/status/2040957101997195514",
+        "https://x.com/jullerino/status/1650911808671170581"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "review this codex pr. title is 'add types to the env loader'",
+          "reply": {
+            "text": "The PR adds types by casting 31 values to `any`. It also adds one `as unknown as string`.",
+            "tools": [
+              [
+                "read",
+                "packages/env/src/load.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "codex writes typescript as if types dont exist. turn on noUncheckedIndexedAccess and fix what breaks",
+          "reply": {
+            "text": "Turned it on and got 412 errors. 409 of them come from this PR.",
+            "tools": [
+              [
+                "edit",
+                "tsconfig.base.json"
+              ],
+              [
+                "bash",
+                "pnpm typecheck"
+              ]
+            ],
+            "diff": [
+              1,
+              0
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "also why is there a for(;;) loop with a break on the first line",
+          "reply": {
+            "text": "It replaced a `while (true)` loop. Codex seems to be avoiding the words, not the loop.",
+            "tools": [
+              [
+                "read",
+                "packages/env/src/watch.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "rewrite the env loader with t3 env and zod. the way it was meant to be",
+          "reply": {
+            "text": "Rewrote it with t3-env and Zod. Zero `as string` casts remain.",
+            "tools": [
+              [
+                "edit",
+                "packages/env/src/load.ts"
+              ]
+            ],
+            "diff": [
+              64,
+              211
+            ],
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-julius-freeze",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Merge freeze",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/jullerino/status/2111599352762536385",
+        "https://x.com/jullerino/status/2111698488753078321",
+        "https://x.com/theo/status/2111960247980159232"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "start a merge freeze on main from friday until i have a duo in my hands",
+          "reply": {
+            "text": "Merge freeze is on. Main is locked for everyone except the release bot.",
+            "tools": [
+              [
+                "bash",
+                "gh api repos/pingdotgg/t3code/rulesets"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "perf prs dont count. merge anything that cuts renders",
+          "reply": {
+            "text": "Understood. I merged 47 perf PRs in the last hour, and the freeze is technically still on.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "how many have we merged since the freeze started",
+          "reply": {
+            "text": "398 in 30 hours. Renders while another thread streams are down 86%.",
+            "tools": [
+              [
+                "bash",
+                "gh pr list --state merged --label perf"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "theo says nightly feels so fast it might be fake. prove the data isnt hard coded",
+          "reply": {
+            "text": "It really is that fast. The only hard coded value I found is the freeze end date, which says when the Duo arrives.",
+            "tools": [
+              [
+                "bash",
+                "pnpm perf:profile --live"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-julius-ghmobile",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Took it personally",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2109528645278769482",
+        "https://x.com/jullerino/status/2109821227753975938",
+        "https://x.com/jullerino/status/1706705899924890068"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "theo told me he likes the github mobile app. list everything it does",
+          "reply": {
+            "text": "GitHub Mobile can view PRs, review diffs, comment and merge. CI logs open in an in-app browser.",
+            "tools": [
+              [
+                "search",
+                "GitHub Mobile features"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "in-app browsers are the most annoying thing ever. build a pr view for our mobile app, no webviews",
+          "reply": {
+            "text": "Built a mobile PR view with diffs, guided review and CI logs inline. There is no webview anywhere.",
+            "tools": [
+              [
+                "edit",
+                "apps/mobile/src/pull-requests/"
+              ]
+            ],
+            "diff": [
+              1840,
+              12
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ship it as a weekend ship. dont tell theo, theo can find it",
+          "reply": {
+            "text": "Shipped. Theo found it in 40 minutes and posted that you took it personally.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "does theo still use github mobile",
+          "reply": {
+            "text": "Theo has not opened GitHub Mobile in 9 days.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-julius-v2",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Which v2",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/jullerino/status/2107511616350924896",
+        "https://x.com/jullerino/status/2104794151699243248",
+        "https://x.com/thdxr/status/2107902855092883496"
+      ],
+      "prompts": [
+        {
+          "kind": "real",
+          "text": "make a webhook task that triages new GitHub issues",
+          "sourceUrl": "https://x.com/jullerino/status/2107511616350924896",
+          "reply": {
+            "text": "Created the webhook task. It asked for the signing secret through a private card and has triaged 212 new issues.",
+            "tools": [
+              [
+                "bash",
+                "t3 task create --trigger webhook"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "half of these just say 'v2 when'. do they mean orchestrator v2 or opencode v2",
+          "reply": {
+            "text": "98 mean Orchestrator V2, 71 mean OpenCode 2, and 43 mean Alchemy v2, which we do not ship.",
+            "tools": [],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "dax says opencode3 drops the plugin system. how much of our adapter uses it",
+          "reply": {
+            "text": "About 60% of the adapter goes through the plugin system. We will need a third adapter.",
+            "tools": [
+              [
+                "search",
+                "plugin in apps/server/src/providers/opencode"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "fine. support v1, v2 and v3 and never say the letter v to me again",
+          "reply": {
+            "text": "Shipped all three adapters. The PR is titled Orchestrator V2: OpenCode v1, v2 and v3 support.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/providers/opencode/"
+              ]
+            ],
+            "diff": [
+              930,
+              40
+            ],
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-julius-ram",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Who ate the RAM",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/jullerino/status/2112687686259732901",
+        "https://x.com/jullerino/status/1795094154659217855",
+        "https://x.com/jullerino/status/2043061270707097643"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "activity monitor says t3 code uses 9gb. figure out where that memory is actually going",
+          "reply": {
+            "text": "T3 Code itself uses 640MB. The other 8.4GB is agent subprocesses that macOS files under T3 Code.",
+            "tools": [
+              [
+                "bash",
+                "ps -axo rss,ppid,comm | sort -n"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "apple should just show the hierarchy view by default. also some vscode extension is at 15gb, find it",
+          "reply": {
+            "text": "Found it. It is an extension you have not opened today, and it has leaked 15GB since 9am.",
+            "tools": [
+              [
+                "bash",
+                "ps -axo rss,comm | grep -i code"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "uninstall it. then fix the thread list, it uses a virtualizer and every virtualizer sucks",
+          "reply": {
+            "text": "Uninstalled it. I replaced the virtualizer with one I wrote, and it also sucks, but less.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/thread-list/VirtualList.tsx"
+              ]
+            ],
+            "diff": [
+              212,
+              340
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "how much less does it suck. give me numbers",
+          "reply": {
+            "text": "It uses 34% less memory and has two new scroll bugs.",
+            "tools": [
+              [
+                "bash",
+                "pnpm bench thread-list"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-maria-reset",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Where is my reset",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/maria_rcks/status/2108645959760580619",
+        "https://x.com/maria_rcks/status/2115857820298121409",
+        "https://x.com/thsottiaux/status/2097043464538264003"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "before you start anything, check if tibo posted a reset today",
+          "reply": {
+            "text": "Tibo posted Day 14 today. It is a feature, not a reset.",
+            "tools": [
+              [
+                "search",
+                "x.com/thsottiaux"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "draft a reply asking for my reset. polite but make it clear i will keep asking",
+          "reply": {
+            "text": "Drafted: 'id like my reset'. It matches the tone of your last 11 replies to Tibo.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "set up a routine that checks tibo's posts every hour and pings me when a reset lands",
+          "reply": {
+            "text": "The routine is live. It fired once, for a post that was only the lyrics to Never Gonna Give You Up, and that one was a reset.",
+            "tools": [
+              [
+                "bash",
+                "t3 task create --every 1h"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "tibo says the reset company is now the token company. what does that mean for me",
+          "reply": {
+            "text": "It means fewer resets and more tokens. Your routine now also watches for the word banked.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-maria-sidebar",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Sidebar v3",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2110483065378361547",
+        "https://x.com/maria_rcks/status/2114547492284936615",
+        "https://x.com/RhysSullivan/status/2114543408429895919"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "t3 code desperately needs a sidebar v3. list everything wrong with the current one",
+          "reply": {
+            "text": "Found 14 problems. The worst is that it takes 340px on a 13 inch laptop.",
+            "tools": [
+              [
+                "read",
+                "apps/web/src/sidebar/Sidebar.tsx"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "rhys posted a screenshot and the sidebar is even wider. why is rhys's sidebar so wide",
+          "reply": {
+            "text": "Rhys dragged it to 520px. The screenshot shows four words of chat.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "cap it at 400px and dont let anyone drag it past that",
+          "reply": {
+            "text": "Capped it at 400px. Rhys's saved width migrated to 400px, and Rhys has already filed an issue.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/sidebar/useSidebarWidth.ts"
+              ]
+            ],
+            "diff": [
+              9,
+              2
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "close the issue and say its intentional",
+          "reply": {
+            "text": "Closed it as intentional. Rhys reopened it with the label regression.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-maria-clone",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Not a Codex clone",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2110506302170665041",
+        "https://x.com/jullerino/status/2064811238392201537",
+        "https://x.com/maria_rcks/status/2117038785967825108"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "t3 code is not the prettiest and im fixing that. pull up the codex desktop layout for reference",
+          "reply": {
+            "text": "Captured the Codex desktop layout. It has three sidebars, and one of them is a sheet.",
+            "tools": [
+              [
+                "bash",
+                "preview screenshot codex-desktop"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "do NOT copy it. we're t3 code, not another codex clone. what makes ours different",
+          "reply": {
+            "text": "Ours has one sidebar, a model picker you can search, and threads on other machines.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "julius wants to steal their little sheet. is one sheet a codex clone",
+          "reply": {
+            "text": "One sheet is inspiration. Two sheets is a Codex clone.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "fine, one sheet. ship the redesign before gta 6",
+          "reply": {
+            "text": "Shipped the redesign to nightly. GTA 6 is not out yet, so you made it.",
+            "tools": [
+              [
+                "bash",
+                "git push origin HEAD:nightly"
+              ]
+            ],
+            "diff": [
+              1220,
+              860
+            ],
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-maria-forks",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "End all forks",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2108798212509454382",
+        "https://x.com/theo/status/2108488695141773400",
+        "https://x.com/maria_rcks/status/2106511690238136535"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "one day ill end all t3code forks. how many are there right now",
+          "reply": {
+            "text": "There are 4,180 forks. 212 of them have commits we do not.",
+            "tools": [
+              [
+                "bash",
+                "gh api repos/pingdotgg/t3code/forks --paginate"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "how many of those added a kanban for agents",
+          "reply": {
+            "text": "61 added a kanban. Theo has commented on 9 of them.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "what do the rest add that we dont have",
+          "reply": {
+            "text": "Most add something we already have behind a setting. One adds pets.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok add pets to t3 code. that should end the pet forks at least",
+          "reply": {
+            "text": "Added pets. 14 forks are now identical to main, and their owners have archived them.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/pets/"
+              ]
+            ],
+            "diff": [
+              640,
+              0
+            ],
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-maria-tiers",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Tier list of everything",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2106240981683314959",
+        "https://x.com/theo/status/2111698116634345929",
+        "https://x.com/maria_rcks/status/2104707827277475867"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "make a tier list of every model in t3 code. s tier is just opus 5.5. WHERES FABLE",
+          "reply": {
+            "text": "Made it. Opus 5.5 is alone in S tier, and Fable 5.5 has its own tier called not released.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "theo coined the google tier. add one below f",
+          "reply": {
+            "text": "Added a Google tier below F. Gemini 4 Argon and Gemini 4 Carbon share it.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "now make a tier list of everyone i follow",
+          "reply": {
+            "text": "Done. Tibo is in S tier with a note that says owes you a reset.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "where did you put theo. be careful, theo is my boss",
+          "reply": {
+            "text": "Theo has a separate tier called reviewing your PR. It is still loading.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-maria-fault",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Somehow also my fault",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2103621589753311585",
+        "https://x.com/thsottiaux/status/2103620061156290622",
+        "https://x.com/thsottiaux/status/2103637477760311522"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "codex is down and tibo posted about it. check if this is somehow my fault",
+          "reply": {
+            "text": "None of your commits touch Codex. You did send 14 requests in the minute before it went down.",
+            "tools": [
+              [
+                "bash",
+                "git log --author=maria-rcks -50"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok so it is my fault. draft the apology",
+          "reply": {
+            "text": "Drafted: 'guys im sorry this was somehow also my fault'. It follows the format of your last apology.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "add a check across the repo so this never happens EVER again",
+          "reply": {
+            "text": "Added a CI check that fails whenever Codex is down. It is failing right now.",
+            "tools": [
+              [
+                "edit",
+                ".github/workflows/codex-status.yml"
+              ]
+            ],
+            "diff": [
+              38,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "codex is back. does the check pass now",
+          "reply": {
+            "text": "It passes. Tibo also posted a reset, so I renamed the check to reset-detector.",
+            "tools": [],
+            "diff": [
+              1,
+              1
+            ],
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-maria-skills",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "70k lines of skills",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2106670327468281927",
+        "https://x.com/maria_rcks/status/2110150367920996855",
+        "https://x.com/poteto/status/2110757066709356851"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "theo caved and published tstack. how many lines of skills does it install",
+          "reply": {
+            "text": "tstack installs 41 skills, about 9,000 lines.",
+            "tools": [
+              [
+                "bash",
+                "npx tstack --dry-run"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "if a package comes with 70k+ lines of skills im uninstalling it that second. check what i have",
+          "reply": {
+            "text": "One package installs 72,400 lines of skills. It is a design pack with one skill per Tailwind class.",
+            "tools": [
+              [
+                "search",
+                "~/.claude/skills"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "uninstall it. then help me home grow some poteto skills, its slow and tedious",
+          "reply": {
+            "text": "Uninstalled it and drafted your first poteto skill. Lauren's version is 12 lines and mine was 340, so I deleted mine.",
+            "tools": [
+              [
+                "edit",
+                "~/.claude/skills/poteto/SKILL.md"
+              ]
+            ],
+            "diff": [
+              0,
+              72400
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok just install pstack and put poteto mode on everything",
+          "reply": {
+            "text": "Installed pstack. Every prompt now starts with /poteto-mode, including this reply.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-tibo-button",
+      "persona": "tibo",
+      "project": "codex",
+      "title": "Find the reset button",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/thsottiaux/status/2110595484180214059",
+        "https://x.com/thsottiaux/status/2089941380336644295",
+        "https://x.com/thsottiaux/status/2111918768733753664"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "It is Day 17. What do we have ready to ship today?",
+          "reply": {
+            "text": "Two things are ready: editing previous messages, and a fix for the capacity error. Both are small.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "Neither is big enough. The community demands a reset.",
+          "reply": {
+            "text": "Understood. Should I press the reset button, or is it still lost?",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "The reports of my reset button being lost are greatly exaggerated. Use the new fancy one.",
+          "reply": {
+            "text": "Found the fancy one on your desk. It is labeled Day 18, so I am not sure it is for today.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "Press it anyway. And print little cards, people ask me for resets on the street now.",
+          "reply": {
+            "text": "Pressed it and printed 500 cards. Maria has already asked for three.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-tibo-delete",
+      "persona": "tibo",
+      "project": "codex",
+      "title": "Code deletion day",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/thsottiaux/status/2098300998968357218",
+        "https://x.com/thsottiaux/status/2106252868307271752",
+        "https://x.com/maria_rcks/status/2106955234467557536"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "List the Codex features that almost nobody uses anymore. We are simplifying.",
+          "reply": {
+            "text": "Found 23. The least used is GPT-5.3-Codex-Spark, with 4 active users, and one of them is Ben.",
+            "tools": [
+              [
+                "bash",
+                "codex-metrics features --sort usage"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "Retire Spark. Can you believe we shipped a model named as such.",
+          "reply": {
+            "text": "Retired it. I could not believe it either, so I checked the name twice.",
+            "tools": [
+              [
+                "edit",
+                "codex-rs/core/src/models.rs"
+              ]
+            ],
+            "diff": [
+              0,
+              640
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "Fortunately our future models will be much better at code deletion. Delete the rest.",
+          "reply": {
+            "text": "Deleted 21 of the 23 features. I kept the reset button and the day counter.",
+            "tools": [
+              [
+                "bash",
+                "git rm -r features/legacy"
+              ]
+            ],
+            "diff": [
+              12,
+              48000
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "Lauren is out-shipping us again. How far behind are we on PRs this month?",
+          "reply": {
+            "text": "Grok Bot merged 2,500 PRs last month and Codex merged 2,100. I am counting the 21 deletions as wins.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-lauren-comments",
+      "persona": "lauren",
+      "project": "grok-bot",
+      "title": "Ban comments",
+      "model": "Grok 4.7",
+      "basis": [
+        "https://x.com/poteto/status/2110149626133438732",
+        "https://x.com/poteto/status/2117043478140276847",
+        "https://x.com/poteto/status/2112736749281759566"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "ban and delete most if not all code comments in this repo. agents copy what already exists",
+          "reply": {
+            "text": "Deleted 1,912 comments. 340 of them said temporary workaround.",
+            "tools": [
+              [
+                "search",
+                "comments in src/"
+              ],
+              [
+                "edit",
+                "src/**/*.ts"
+              ]
+            ],
+            "diff": [
+              0,
+              1912
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "every time you find an issue, make a lint rule against it",
+          "reply": {
+            "text": "Made 88 lint rules. One bans comments, so the lint rules have no comments either.",
+            "tools": [
+              [
+                "edit",
+                "lint/rules/"
+              ]
+            ],
+            "diff": [
+              2210,
+              0
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "write a formal spec for the thread lifecycle with /create-formal-verification-skill",
+          "reply": {
+            "text": "Wrote a TLA+ spec. The model checker found a state where a thread is archived and streaming at once.",
+            "tools": [
+              [
+                "edit",
+                "specs/ThreadLifecycle.tla"
+              ],
+              [
+                "bash",
+                "tlc specs/ThreadLifecycle.tla"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "fix it, then draw me the statechart",
+          "reply": {
+            "text": "Fixed it and drew the statechart. It has 14 states and zero comments.",
+            "tools": [
+              [
+                "edit",
+                "src/threads/lifecycle.ts"
+              ]
+            ],
+            "diff": [
+              6,
+              2
+            ],
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-lauren-bro",
+      "persona": "lauren",
+      "project": "tibo-dog",
+      "title": "Catch me up",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/poteto/status/2109024196760305861",
+        "https://x.com/poteto/status/2117328786555564192",
+        "https://x.com/poteto/status/2118017093677494706"
+      ],
+      "prompts": [
+        {
+          "kind": "real",
+          "text": "/bro catch me up on everything since my last message, and if there are any action items for me give me enough context (exec summary) to make a call",
+          "sourceUrl": "https://x.com/poteto/status/2109024196760305861",
+          "reply": {
+            "text": "All 16 projects moved since your last message. One needs a call: tibo.dog wants a new boss for the final level.",
+            "tools": [],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "real",
+          "text": "restate in your own words what you think my goals are and what the problem i'm trying to solve is",
+          "sourceUrl": "https://x.com/poteto/status/2110047236369547621",
+          "reply": {
+            "text": "Your goal is to ship everything. The problem is that only 16 projects are running.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "make tibo the final boss. tibo can only be beaten with a reset",
+          "reply": {
+            "text": "Added Tibo as the final boss. Defeating Tibo drops one banked reset.",
+            "tools": [
+              [
+                "edit",
+                "src/levels/final-boss.ts"
+              ]
+            ],
+            "diff": [
+              214,
+              6
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ship it. merge as soon as verification passes, i'm not reading it",
+          "reply": {
+            "text": "Merged PR 1,151. I did not read it either, but the formal verification passed.",
+            "tools": [
+              [
+                "bash",
+                "tlc specs/Game.tla && gh pr merge --auto"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-ben-best-model",
+      "persona": "ben",
+      "project": "nerd-snipe",
+      "title": "Best model in the world",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/davis7/status/2095221367897821406",
+        "https://x.com/davis7/status/2095597502653435954",
+        "https://x.com/davis7/status/2074975718484898182"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "recording the pod w theo tmrw. pull every benchmark where gemini 3.8 flash is the best model",
+          "reply": {
+            "text": "I found none where Gemini 3.8 Flash is first. Its best is 74% on DeepSWE, which you posted as AGI.",
+            "tools": [
+              [
+                "search",
+                "DeepSWE leaderboard"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok that was a typo. i meant gpt-6 astra. fix my notes",
+          "reply": {
+            "text": "Updated your notes to say Astra. I kept a footnote about the typo.",
+            "tools": [
+              [
+                "edit",
+                "notes/episode-41.md"
+              ]
+            ],
+            "diff": [
+              1,
+              1
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "theo is gonna say fable. write me rebuttals",
+          "reply": {
+            "text": "Wrote four rebuttals. Each one ends with the phrase big model smell.",
+            "tools": [
+              [
+                "edit",
+                "notes/episode-41.md"
+              ]
+            ],
+            "diff": [
+              22,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "make the thumbnail. me and theo arguing about astra's output behavior",
+          "reply": {
+            "text": "Made the thumbnail. Gemini 3.8 Flash is in the background, for continuity.",
+            "tools": [],
+            "diff": null,
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-ben-pi",
+      "persona": "ben",
+      "project": "pi-extensions",
+      "title": "Pi spawns Pi",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/davis7/status/2083955357953446205",
+        "https://x.com/davis7/status/2077157941371949285",
+        "https://x.com/davis7/status/2077157943901077871"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "add the multiple choice tool to my codex config so it works outside plan mode",
+          "reply": {
+            "text": "Added it. Codex has asked you six multiple choice questions since, including one about this change.",
+            "tools": [
+              [
+                "edit",
+                "~/.codex/config.toml"
+              ]
+            ],
+            "diff": [
+              4,
+              0
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "now make my pi thread able to spawn pi, codex and claude code subagents",
+          "reply": {
+            "text": "Done. Your Pi thread can spawn all three, and each of them can spawn Pi.",
+            "tools": [
+              [
+                "edit",
+                "extensions/subagents/index.ts"
+              ]
+            ],
+            "diff": [
+              420,
+              18
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "how many threads are running on the linux box rn",
+          "reply": {
+            "text": "22 Codex threads, 9 Claude Code threads, and 31 Pi threads that spawned each other.",
+            "tools": [
+              [
+                "bash",
+                "ssh linux-box 'pgrep -c -f agent'"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "this flow is so good i have to fork t3 code. julius is gonna be mad, get ahead of it",
+          "reply": {
+            "text": "Drafted an apology to Julius. Your fork is 3 commits old and already has a kanban.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-dax-plugins",
+      "persona": "dax",
+      "project": "opencode",
+      "title": "OpenCode 3",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/thdxr/status/2107902855092883496",
+        "https://x.com/thdxr/status/2118059907949690955",
+        "https://x.com/thdxr/status/2116581467715195278"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "im gonna remove the plugin system in opencode3. how many people actually use plugins",
+          "reply": {
+            "text": "About 11,000 users have a plugin. Most have exactly one, and it adds back something you removed in OpenCode 2.",
+            "tools": [],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "move the plugins we like into core and delete the rest",
+          "reply": {
+            "text": "Moved 9 plugins into core and deleted the plugin system.",
+            "tools": [
+              [
+                "edit",
+                "packages/opencode/src/plugin/"
+              ]
+            ],
+            "diff": [
+              3100,
+              22400
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "switch every subagent to deepseek flash. opus only runs the primary",
+          "reply": {
+            "text": "Switched. Subagent cost is down 92%, and Opus now spends its day reviewing DeepSeek.",
+            "tools": [
+              [
+                "edit",
+                ".opencode/agents.json"
+              ]
+            ],
+            "diff": [
+              6,
+              6
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "people are gonna say were nerfing the model. were not. run every benchmark you can find",
+          "reply": {
+            "text": "Ran every benchmark I could find on every config. All scores match DeepSeek's own numbers within noise.",
+            "tools": [
+              [
+                "bash",
+                "bench run --all --model deepseek-v4.1-flash"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-dax-voice",
+      "persona": "dax",
+      "project": "hex",
+      "title": "Voice prompting",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/thdxr/status/2118104720183332922",
+        "https://x.com/thdxr/status/2115856104143872163",
+        "https://x.com/thdxr/status/2113783039243276763"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "whole team is in the office. turn on hex voice input for every agent in the room",
+          "reply": {
+            "text": "Hex is on for 12 agents. Transcripts come out in lowercase, so nobody can tell they were voice prompted.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "someone just yelled delete all my files across the room. what happened",
+          "reply": {
+            "text": "Three agents heard it. All three asked whose files.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "use a gemini subagent for this, its good at tricky architecture questions",
+          "reply": {
+            "text": "Asked the Gemini subagent. It recommends a monorepo, which you moved off last week.",
+            "tools": [],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ignore it. we just switched to multi repos and i cant care about monorepos anymore",
+          "reply": {
+            "text": "Ignored it. Four of the voice agents heard the word monorepos and started a migration.",
+            "tools": [],
+            "diff": null,
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-adam-charts",
+      "persona": "adam",
+      "project": "prior",
+      "title": "Put free somewhere",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/AdamHoltererer/status/2117643592458010792",
+        "https://x.com/AdamHoltererer/status/2115879449745150351",
+        "https://x.com/AdamHoltererer/status/2112341598826537127"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "chart how much api usage $1 of each plan buys. log scale",
+          "reply": {
+            "text": "Made the chart. Gemini's plan barely registers, so the chart is unreadable.",
+            "tools": [
+              [
+                "bash",
+                "python charts/subsidy.py --log"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "a log axis has no zero. just put free somewhere arbitrary",
+          "reply": {
+            "text": "Put free at 0.001. Two Google plans are now below free.",
+            "tools": [
+              [
+                "edit",
+                "charts/subsidy.py"
+              ]
+            ],
+            "diff": [
+              2,
+              1
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "redo it as time per task. tokens per second is still a meaningless metric",
+          "reply": {
+            "text": "Redone. No model keeps its speed rank, and Opus streams fastest but finishes 7 minutes later.",
+            "tools": [
+              [
+                "bash",
+                "python charts/time_per_task.py"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "post it and tag theo and tibo. whoever follows me first wins",
+          "reply": {
+            "text": "Posted it and tagged both. Theo followed first, so Tibo lost.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-adam-garble",
+      "persona": "adam",
+      "project": "prior",
+      "title": "GarbleBench",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/AdamHoltererer/status/2115979715278217348",
+        "https://x.com/AdamHoltererer/status/2118099628910412117",
+        "https://x.com/AdamHoltererer/status/2117219692326555728"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "run this exact prompt on every model: Aahl s5ehxaxlizat/icry=0uasv65.s",
+          "reply": {
+            "text": "Ran it on 9 models. Gemini answered: The capital of Australia is Canberra.",
+            "tools": [
+              [
+                "bash",
+                "bench run garble --all-models"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "is that answer correct or did gemini hallucinate it",
+          "reply": {
+            "text": "It is correct about Canberra. Nobody asked about Canberra.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "while youre there ask grok 4.7 what company made it",
+          "reply": {
+            "text": "Grok 4.7 says it was made by XDI.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "publish it as garblebench. grade every model with a model from a different lab",
+          "reply": {
+            "text": "Published GarbleBench. Gemini is first, which makes it the only leaderboard where that happens.",
+            "tools": [
+              [
+                "bash",
+                "bench publish garblebench"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-theo-bakeoff",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Three models, one bug",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/theo/status/2109874961070616654"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "same bug, three models. what would opus do, what would you do, and what would muse do. dont fix it yet",
+          "reply": {
+            "text": "Opus would file a PR, I would write hundreds of tests and a long explanation, and Muse would point at the other PR.",
+            "tools": [],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "do all three. opus files the pr. you write 300 tests and explain them badly. muse points at the other one",
+          "reply": {
+            "text": "Filed the PR, added 300 tests, and left a comment pointing at the other PR. Nothing is merged.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/threadSync.test.ts"
+              ],
+              [
+                "bash",
+                "gh pr create"
+              ]
+            ],
+            "diff": [
+              612,
+              4
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "i like muse here. close ours, merge theirs, and park your tests on a branch called do-not-merge",
+          "reply": {
+            "text": "Closed ours and merged theirs. The 300 tests are on do-not-merge, passing against code we do not ship.",
+            "tools": [
+              [
+                "bash",
+                "git push origin do-not-merge"
+              ],
+              [
+                "bash",
+                "gh pr merge 441 --repo pingdotgg/t3code"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "read the comment on those tests. if it is longer than the tests, delete it. i did not ask for a second program",
+          "reply": {
+            "text": "The comment was longer than the 300 tests. I deleted the comment.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/threadSync.test.ts"
+              ]
+            ],
+            "diff": [
+              0,
+              340
+            ],
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-theo-terminals",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "For some reason",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/theo/status/2115679694653911381",
+        "https://x.com/theo/status/2038501745274565067",
+        "https://x.com/maria_rcks/status/2101829213636436086"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "it is insane that people still prompt agents from a terminal. list every place t3 code makes that easy",
+          "reply": {
+            "text": "Three places: the terminal panel, the backtick shortcut, and a command named Open terminal.",
+            "tools": [
+              [
+                "search",
+                "terminal in apps/web/src"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "hide the in-app terminal under a menu called for some reason. default it closed",
+          "reply": {
+            "text": "The terminal now lives under a menu called for some reason. It starts closed.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/components/TerminalPanel.tsx"
+              ]
+            ],
+            "diff": [
+              11,
+              4
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "maria shipped a tui clone to troll me. if we are inside one, stop and tell her she won",
+          "reply": {
+            "text": "Stopped, because the parent process is t1code. I left Maria a note that says she won.",
+            "tools": [
+              [
+                "bash",
+                "ps -o comm= -p $PPID"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "she won, fine. put the terminal back for me only. everyone else keeps the menu called for some reason",
+          "reply": {
+            "text": "Your user has the terminal back. Everyone else still opens a menu called for some reason.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/components/TerminalPanel.tsx"
+              ]
+            ],
+            "diff": [
+              6,
+              1
+            ],
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-theo-tibo",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Checking on Tibo",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/theo/status/2110580418898780462",
+        "https://x.com/thsottiaux/status/2115850175868727621"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "check on tibo. a full day without a post is concerning. read the latest one before you panic",
+          "reply": {
+            "text": "His latest post is a usage reset from 3 hours ago. I have not posted anything.",
+            "tools": [
+              [
+                "search",
+                "from:thsottiaux since:today"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "a reset means he is fine. if you drafted something worried, delete it before anyone sees it",
+          "reply": {
+            "text": "There was a draft that started with hope you are okay. I deleted it.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "reply never mind and nothing else. if he posts another reset while you type, still just never mind",
+          "reply": {
+            "text": "Replied to Tibo: never mind. He posted another reset while I was sending it.",
+            "tools": [
+              [
+                "bash",
+                "gh api user/thsottiaux"
+              ]
+            ],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-julius-tokenmin",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "Tokenminimizing",
+      "model": "Fable 5.1",
+      "basis": [
+        "https://x.com/jullerino/status/2089981283346620811"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "tokenminimize the tool descriptions. cut until the eval gets worse, then put exactly one step back",
+          "reply": {
+            "text": "Cut descriptions until the eval failed, then restored one line. It passes again.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/prompts/tools.md"
+              ],
+              [
+                "bash",
+                "pnpm eval --suite tools"
+              ]
+            ],
+            "diff": [
+              1,
+              880
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "that is still a paragraph. two words. if the eval dies you may have a third, and then you stop",
+          "reply": {
+            "text": "Two words failed the eval and a third word passed. I stopped there.",
+            "tools": [
+              [
+                "bash",
+                "pnpm eval --suite tools"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "no. two words, token and minimize. if a tool needs a third word, cut the tool",
+          "reply": {
+            "text": "Shipped two words: token minimize. One tool needed a third word, so I removed the tool.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/prompts/tools.md"
+              ]
+            ],
+            "diff": [
+              2,
+              14040
+            ],
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-julius-while",
+      "persona": "julius",
+      "project": "t3code",
+      "title": "while (true)",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/jullerino/status/2040957101997195514"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "codex got scared of while (true) and rewrote our loop into something worse. find that loop",
+          "reply": {
+            "text": "Found it. The loop is for (;;), which is the same loop with the words taken out.",
+            "tools": [
+              [
+                "search",
+                "for (;; in apps/server/src"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "put the loop back with a real exit. do not rename true to make a linter feel better",
+          "reply": {
+            "text": "I wrote while (!false), so the condition is still true and the word true is absent.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/agent/loop.ts"
+              ]
+            ],
+            "diff": [
+              3,
+              3
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "while (!false) is the same fear in a hat. i want while (true) and a break. then stop helping",
+          "reply": {
+            "text": "It is while (true) now, with a break under it. I am not going to explain why true is allowed.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/agent/loop.ts"
+              ]
+            ],
+            "diff": [
+              2,
+              1
+            ],
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-maria-50ms",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "50 milliseconds",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2107613294274261275"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "how does a chat app not launch in 50ms. time ours. do not open anything on discord, we do not work there",
+          "reply": {
+            "text": "Cold launch is 180ms. I did not open anything on Discord.",
+            "tools": [
+              [
+                "bash",
+                "pnpm bench launch"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "if we are over 50 i bet it is the model picker being dramatic. check that before you rewrite launch",
+          "reply": {
+            "text": "The picker is 90ms of the 180. Your guess was right.",
+            "tools": [
+              [
+                "bash",
+                "pnpm bench launch --trace picker"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "get us under 50. if you hardcode opus to get there, say it out loud. that is a regression indicator",
+          "reply": {
+            "text": "Launch is 47ms because the first paint hardcodes Opus and the real picker loads after. That is the regression.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/boot/picker.ts"
+              ]
+            ],
+            "diff": [
+              9,
+              3
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "WAIT 47ms?? keep the hardcoded opus on nightly only. stable has to tell the truth",
+          "reply": {
+            "text": "Nightly still paints in 47ms. Stable waits for the real picker and takes 180.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/boot/picker.ts"
+              ],
+              [
+                "bash",
+                "git push origin HEAD:nightly"
+              ]
+            ],
+            "diff": [
+              4,
+              1
+            ],
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-maria-j3",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Call it j3",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2115217098213302467"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "it should be called j3 code. rename the words users see. do not rename the repo, he will notice the repo",
+          "reply": {
+            "text": "Renamed the visible strings to j3 code. The repo is still t3code.",
+            "tools": [
+              [
+                "search",
+                "T3 Code in apps/web/src"
+              ],
+              [
+                "edit",
+                "apps/web/src/brand.ts"
+              ]
+            ],
+            "diff": [
+              6,
+              6
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "about box can say me and theo are here to annoy julius every once in a while. keep it to one line",
+          "reply": {
+            "text": "The about box is one line: theo and maria are here to annoy julius every once in a while.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/components/About.tsx"
+              ]
+            ],
+            "diff": [
+              1,
+              1
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "tag julius. if he asks, this was a bit. if he merges it, that is on him. write both of those in the pr",
+          "reply": {
+            "text": "Tagged Julius. The PR says this was a bit, and that merging it is on him.",
+            "tools": [
+              [
+                "bash",
+                "gh pr create --reviewer jullerino"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-maria-cache",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "Not forever",
+      "model": "Fable 5.1",
+      "basis": [
+        "https://x.com/maria_rcks/status/2112716526805823812"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "how do we keep the prompt cache forever. find what actually evicts it before you build a system",
+          "reply": {
+            "text": "Deploys evict it and nothing else does. I have not added a system.",
+            "tools": [
+              [
+                "search",
+                "cache in apps/server/src/prompt"
+              ],
+              [
+                "read",
+                "apps/server/src/prompt/cache.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "if a deploy is what kills it, persist it. i want the same cache after update all",
+          "reply": {
+            "text": "The cache is written next to the thread now. Update all no longer clears it.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/prompt/cache.ts"
+              ]
+            ],
+            "diff": [
+              17,
+              4
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "forever means forever. if a safety cap says 7 days, name that constant not-forever so i can see it",
+          "reply": {
+            "text": "The cap is a constant named not-forever, set to 7 days. Forever did not fit.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/prompt/cache.ts"
+              ]
+            ],
+            "diff": [
+              1,
+              1
+            ],
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-maria-pet",
+      "persona": "maria",
+      "project": "t3code",
+      "title": "The pet says pls",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/maria_rcks/status/2106511690238136535",
+        "https://x.com/maria_rcks/status/2118139214592344266"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "if we add pets they do nothing useful. a little guy in the corner that watches the thread. no name",
+          "reply": {
+            "text": "There is a pet in the corner. It has no name and it does not click.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/components/Pet.tsx"
+              ]
+            ],
+            "diff": [
+              24,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "when tests pass it can gasp once. if you give it dialogue i am deleting the whole feature",
+          "reply": {
+            "text": "On a passing test it says NOOO WAYY, once. That is the whole line.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/components/Pet.tsx"
+              ]
+            ],
+            "diff": [
+              1,
+              0
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "too much. change the gasp to pls. still no name. still no job",
+          "reply": {
+            "text": "It says pls now. It still has no name, and it still does nothing useful.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/components/Pet.tsx"
+              ]
+            ],
+            "diff": [
+              1,
+              1
+            ],
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-lauren-hot",
+      "persona": "lauren",
+      "project": "pstack",
+      "title": "No allocations",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://x.com/poteto/status/2117043478140276847",
+        "https://x.com/poteto/status/2110149626133438732"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "i landed about 1150 prs in four days. do not congratulate me. ban allocations in files ending in .hot.ts",
+          "reply": {
+            "text": "No congratulations, and hot-path files now fail the build if they allocate.",
+            "tools": [
+              [
+                "edit",
+                "lint/no-alloc-hot.ts"
+              ]
+            ],
+            "diff": [
+              40,
+              0
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "no object literals, no closures, no new. it is a lint rule. do not add a comment that explains the lint",
+          "reply": {
+            "text": "The lint bans object literals, closures, and new. It has no comment.",
+            "tools": [
+              [
+                "edit",
+                "lint/no-alloc-hot.ts"
+              ]
+            ],
+            "diff": [
+              12,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "the lint file allocates, so it fails its own rule. fix the file. you still do not get a comment",
+          "reply": {
+            "text": "The lint file no longer allocates, so it passes itself. I still did not add a comment.",
+            "tools": [
+              [
+                "edit",
+                "lint/no-alloc-hot.ts"
+              ]
+            ],
+            "diff": [
+              8,
+              15
+            ],
+            "seconds": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-dax-carl",
+      "persona": "dax",
+      "project": "opencode",
+      "title": "Stop at Carl",
+      "model": "Grok 4.7",
+      "basis": [
+        "https://x.com/thdxr/status/2116319701252841882"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "trace the gpu offer. write the chain. they have them, then they are a broker, then they are waiting on a buyer",
+          "reply": {
+            "text": "Three names deep, each one pointing at the next. No GPUs have shown up.",
+            "tools": [
+              [
+                "read",
+                "notes/gpu-offers.md"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "keep my numbering, there is no 4. one of them is always named carl. find which step that is",
+          "reply": {
+            "text": "Numbered 1, 2, 3, 5, and Carl is step 5. He has the room, and the note says it is being upgraded.",
+            "tools": [
+              [
+                "search",
+                "carl in notes/gpu-offers.md"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "stop at carl. he has the room. nobody in that chain has the gpus. do not go back to the broker",
+          "reply": {
+            "text": "Stopped at Carl, who has the room while nobody in the chain has the GPUs. There is no step 4.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "g-adam-exactly",
+      "persona": "adam",
+      "project": "subs",
+      "title": "Exactly the same",
+      "model": "GPT-6.1 Sol",
+      "basis": [
+        "https://x.com/AdamHoltererer/status/2115966549936787948",
+        "https://x.com/theo/status/2115974726103556366",
+        "https://x.com/theo/status/2110194452157587542"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "they doubled the limits. do the math before i post. if the new cap equals the old cap, one sentence",
+          "reply": {
+            "text": "The new cap equals the old cap. They doubled the limits to exactly what you already have.",
+            "tools": [
+              [
+                "bash",
+                "python limits.py --compare doubled"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "that sentence is the post. then the chart. both bars the same height. label the y axis exactly",
+          "reply": {
+            "text": "The chart has two bars of equal height. The axis label is exactly.",
+            "tools": [
+              [
+                "edit",
+                "charts/doubled.svg"
+              ]
+            ],
+            "diff": [
+              20,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "theo already boosts these. send him the sentence by itself. do not add incredible deal, that word is his",
+          "reply": {
+            "text": "Sent Theo the sentence and nothing else. I did not add incredible deal.",
+            "tools": [
+              [
+                "bash",
+                "gh api repos/pingdotgg/subs/issues/1/comments -f body=@sentence.txt"
+              ]
+            ],
             "diff": null,
             "seconds": 2
           }

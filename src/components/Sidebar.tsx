@@ -26,7 +26,7 @@ import {
 } from "~/game/store";
 import { compactSidebarTimeLabel, formatRelativeElapsed, formatWorkingDurationLabel } from "~/lib/time";
 import { cn } from "~/lib/utils";
-import { ClaudeAI, OpenAI, T3Wordmark } from "./Icons";
+import { providerIcon, T3Wordmark } from "./Icons";
 import { ProjectFavicon } from "./ProjectMonogram";
 
 const sidebarMenuButton =
@@ -90,7 +90,7 @@ function SidebarThreadHeader() {
 }
 
 function ProviderIcon({ thread }: { thread: ThreadState }) {
-  const Icon = threadProvider(thread.def) === "claude" ? ClaudeAI : OpenAI;
+  const Icon = providerIcon(threadProvider(thread.def));
   return <Icon aria-hidden className="size-3.5 shrink-0" />;
 }
 

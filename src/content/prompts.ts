@@ -130,10 +130,12 @@ export function threadBranch(thread: ThreadDef): string {
   return `${thread.persona}/${slug}`;
 }
 
-export type ProviderKind = "claude" | "codex";
+export type ProviderKind = "claude" | "codex" | "other";
 
 export function threadProvider(thread: ThreadDef): ProviderKind {
-  return /claude|opus|sonnet|haiku/i.test(thread.model) ? "claude" : "codex";
+  if (/claude|opus|sonnet|haiku|fable/i.test(thread.model)) return "claude";
+  if (/gpt|codex|sol|astra|terra|luna/i.test(thread.model)) return "codex";
+  return "other";
 }
 
 /** Projects in sidebar order, first appearance wins. */
