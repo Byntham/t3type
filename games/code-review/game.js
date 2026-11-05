@@ -26,14 +26,16 @@ exposeState("code-review", () => ({
 }));
 
 function pickRounds() {
-  // A real quote much longer than its anti-pattern is a tell, so prefer
-  // passages of similar length. Fall back to the rest if the pool is small.
-  const pool = PASSAGES.filter((p) => p.antiPattern);
-  const close = (p) => p.text.length <= Math.max(140, p.antiPattern.length * 1.8);
+  // The good line is the one-sentence lesson, not the full quote: quotes run
+  // about 2.3x longer than their anti-patterns, so length gave the answer
+  // away. Prefer pairs within 1.5x of each other. The full quote shows after.
+  const pool = PASSAGES.filter((p) => p.antiPattern && p.lesson);
+  const ratio = (p) => p.lesson.length / p.antiPattern.length;
+  const close = (p) => ratio(p) <= 1.5 && ratio(p) >= 1 / 1.5;
   const order = [...shuffle(pool.filter(close), rand), ...shuffle(pool.filter((p) => !close(p)), rand)];
   return shuffle(order.slice(0, ROUNDS), rand).map((passage) => ({
     passage,
-    lines: shuffle([{ text: passage.text, good: true }, { text: passage.antiPattern, good: false }], rand),
+    lines: shuffle([{ text: passage.lesson, good: true }, { text: passage.antiPattern, good: false }], rand),
     approved: null,
   }));
 }
