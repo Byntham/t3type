@@ -30,6 +30,7 @@ export interface ThreadState {
   turns: Turn[];
   draft: string;
   draftMs: RealMs;
+  draftWordsMs: RealMs;
   draftLastKeyAt: RealMs | null;
   draftKeys: number;
   draftCorrectKeys: number;
@@ -79,6 +80,7 @@ function seededThreads(now: number, defs: ThreadDef[]): ThreadState[] {
     turns: [],
     draft: "",
     draftMs: 0,
+    draftWordsMs: 0,
     draftLastKeyAt: null,
     draftKeys: 0,
     draftCorrectKeys: 0,
@@ -199,8 +201,8 @@ export function computeStats(s: GameState = state): Stats {
   const open = activeThread(s);
   const prompt = nextPrompt(open);
   let liveWpm: number | null = null;
-  if (open.draft.length > 0 && prompt && open.draftMs >= 1000) {
-    liveWpm = Math.round(wpmOf(correctCharsOf(open.draft, prompt.text), open.draftMs));
+  if (open.draft.length > 0 && prompt && open.draftWordsMs >= 1000) {
+    liveWpm = Math.round(wpmOf(correctCharsOf(open.draft.trimEnd(), prompt.text), open.draftWordsMs));
   } else if (open.draft.length === 0 && open.turns.length > 0) {
     liveWpm = open.turns.at(-1)!.result.wpm;
   }
@@ -297,6 +299,12 @@ function addTimeSinceLastKey(thread: ThreadState, real: RealMs): ThreadState {
   return { ...thread, draftMs: thread.draftMs + gap, draftLastKeyAt: real };
 }
 
+function editDraft(thread: ThreadState, draft: string, real: RealMs): ThreadState {
+  const timed = addTimeSinceLastKey(thread, real);
+  const wordsChanged = draft.trimEnd() !== thread.draft.trimEnd();
+  return { ...timed, draft, draftWordsMs: wordsChanged ? timed.draftMs : thread.draftWordsMs };
+}
+
 function canType(thread: ThreadState): boolean {
   return state.session.status !== "ended" && awaitingInput(thread);
 }
@@ -324,8 +332,7 @@ export function typeChar(ch: string) {
     },
   };
   set(updateThread(s, thread.def.id, (t) => ({
-    ...addTimeSinceLastKey(t, real),
-    draft: t.draft + ch,
+    ...editDraft(t, t.draft + ch, real),
     draftKeys: t.draftKeys + 1,
     draftCorrectKeys: t.draftCorrectKeys + (correct ? 1 : 0),
   })));
@@ -335,7 +342,7 @@ export function backspace(word = false) {
   const thread = activeThread();
   if (!canType(thread) || thread.draft.length === 0) return;
   const draft = word ? thread.draft.replace(/\S+\s*$|\s+$/, "") : thread.draft.slice(0, -1);
-  set(updateThread(state, thread.def.id, (t) => ({ ...addTimeSinceLastKey(t, Date.now()), draft })));
+  set(updateThread(state, thread.def.id, (t) => editDraft(t, draft, Date.now())));
 }
 
 export function send() {
@@ -344,12 +351,11 @@ export function send() {
   if (!prompt || !canType(thread) || thread.draft.trim().length === 0) return;
   const now = clock();
   let s = startIfReady(advance(state, now), now);
-  const timed = addTimeSinceLastKey(thread, Date.now());
   const correctChars = correctCharsOf(thread.draft.trim(), prompt.text);
   const result: PromptResult = {
-    wpm: Math.round(wpmOf(correctChars, timed.draftMs)),
+    wpm: Math.round(wpmOf(correctChars, thread.draftWordsMs)),
     accuracy: thread.draftKeys > 0 ? thread.draftCorrectKeys / thread.draftKeys : 1,
-    ms: Math.max(timed.draftMs, MIN_TEST_MS),
+    ms: Math.max(thread.draftWordsMs, MIN_TEST_MS),
     correctChars,
   };
   const diff = diffPrompt(thread.draft, prompt.text);
@@ -379,6 +385,7 @@ export function send() {
     turns: [...t.turns, turn],
     draft: "",
     draftMs: 0,
+    draftWordsMs: 0,
     draftLastKeyAt: null,
     draftKeys: 0,
     draftCorrectKeys: 0,
