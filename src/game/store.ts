@@ -48,9 +48,6 @@ export interface Session {
   correctKeystrokes: number;
   promptsSent: number;
   typosLiteral: number;
-  runningAgentMs: GameMs;
-  lastSampleAt: GameMs | null;
-  peakAgents: number;
 }
 
 export interface GameState {
@@ -100,9 +97,6 @@ function freshSession(): Session {
     correctKeystrokes: 0,
     promptsSent: 0,
     typosLiteral: 0,
-    runningAgentMs: 0,
-    lastSampleAt: null,
-    peakAgents: 0,
   };
 }
 
@@ -154,10 +148,6 @@ export function isSettled(thread: ThreadState): boolean {
   return thread.settledAt !== null;
 }
 
-export function runningCount(threads: ThreadState[]): number {
-  return threads.filter(isWorking).length;
-}
-
 export function activeThread(s: GameState = state): ThreadState {
   return s.threads.find((thread) => thread.def.id === s.activeId) ?? s.threads[0]!;
 }
@@ -170,8 +160,6 @@ export interface Stats {
   accuracy: number;
   promptsSent: number;
   typosLiteral: number;
-  parallelism: number;
-  peakAgents: number;
   elapsedMs: number;
   threadsDone: number;
 }
@@ -217,26 +205,13 @@ export function computeStats(s: GameState = state): Stats {
     accuracy,
     promptsSent: session.promptsSent,
     typosLiteral: session.typosLiteral,
-    parallelism: elapsedMs > 0 ? session.runningAgentMs / elapsedMs : 0,
-    peakAgents: session.peakAgents,
     elapsedMs,
     threadsDone: s.threads.filter(isComplete).length,
   };
 }
 
-function sampleRunningAgents(session: Session, threads: ThreadState[], now: GameMs): Session {
-  if (session.status !== "playing" || session.lastSampleAt === null) return session;
-  const running = runningCount(threads);
-  return {
-    ...session,
-    runningAgentMs: session.runningAgentMs + running * Math.max(0, now - session.lastSampleAt),
-    lastSampleAt: now,
-  };
-}
-
 function advance(s: GameState, now: GameMs): GameState {
   let changed = false;
-  const session = sampleRunningAgents(s.session, s.threads, now);
   const threads = s.threads.map((thread) => {
     const last = thread.turns.at(-1);
     if (!last || last.done || now < last.startedAt + last.durationMs) return thread;
@@ -249,9 +224,9 @@ function advance(s: GameState, now: GameMs): GameState {
       updatedAt: finishedAt,
     };
   });
-  let next: GameState = { ...s, threads: changed ? threads : s.threads, session, now };
+  let next: GameState = { ...s, threads: changed ? threads : s.threads, now };
   next = autoSettle(next, now);
-  if (session.status === "playing" && next.threads.every(isComplete)) {
+  if (s.session.status === "playing" && next.threads.every(isComplete)) {
     next = endSession(next, "done", now);
   }
   return next;
@@ -282,7 +257,7 @@ function autoSettle(s: GameState, now: GameMs): GameState {
 function endSession(s: GameState, reason: "done", at: GameMs): GameState {
   return {
     ...s,
-    session: { ...s.session, status: "ended", endReason: reason, endedAt: at, lastSampleAt: null },
+    session: { ...s.session, status: "ended", endReason: reason, endedAt: at },
   };
 }
 
@@ -311,7 +286,7 @@ function canType(thread: ThreadState): boolean {
 
 function startIfReady(s: GameState, now: GameMs): GameState {
   if (s.session.status !== "ready") return s;
-  return { ...s, session: { ...s.session, status: "playing", startedAt: now, lastSampleAt: now } };
+  return { ...s, session: { ...s.session, status: "playing", startedAt: now } };
 }
 
 export function typeChar(ch: string) {
@@ -391,8 +366,6 @@ export function send() {
     draftCorrectKeys: 0,
     updatedAt: now,
   }));
-  const running = runningCount(s.threads);
-  s = { ...s, session: { ...s.session, peakAgents: Math.max(s.session.peakAgents, running) } };
   set(s);
 }
 

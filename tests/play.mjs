@@ -115,14 +115,13 @@ async function playFullSessionInDark(browser) {
   check(end.stats.promptsSent === totalPrompts, `sent all ${totalPrompts} prompts (got ${end.stats.promptsSent})`);
   check(end.stats.typosLiteral >= typoPrompts, `typos taken literally: ${end.stats.typosLiteral} for ${typoPrompts} typo prompts`);
   check(switchesWhileRunning >= 5, `switched threads while an agent ran ${switchesWhileRunning} times`);
-  check(end.stats.parallelism > 1, `parallelism above 1 (got ${end.stats.parallelism.toFixed(2)})`);
   check(end.stats.accuracy < 1 && end.stats.accuracy > 0.9, `accuracy is plausible (${(end.stats.accuracy * 100).toFixed(1)}%)`);
   check(end.stats.wpm > 0, `wpm is positive (${end.stats.wpm})`);
   const literal = end.threads.flatMap((t) => t.turns).filter((turn) => turn.reply.literal);
   const quotesTypo = literal.every((turn) => turn.diff.typos.length === 0 || turn.reply.text.includes(turn.diff.typos[0].typed));
   check(literal.length > 0 && quotesTypo, `${literal.length} literal replies quote the typo as typed`);
   const summary = await page.locator("[data-summary]").allTextContents();
-  check(summary.length === 7, `end screen shows ${summary.length} stat rows`);
+  check(summary.length === 5, `end screen shows ${summary.length} stat rows`);
   check(errors.length === 0, `no console errors in dark run${errors.length ? `: ${errors.join(" | ")}` : ""}`);
 
   await page.keyboard.press("Enter");
