@@ -120,7 +120,9 @@ export function ProviderModelPicker({ thread }: { thread: ThreadDef }) {
   );
 }
 
-const RUNTIME_MODE: Record<PersonaKey, { label: string; description: string; icon: typeof ShieldOffIcon }> = {
+type RuntimeMode = { label: string; description: string; icon: typeof ShieldOffIcon };
+const FULL_ACCESS: RuntimeMode = { label: "Full access", description: "Allow commands and edits without prompts.", icon: ShieldOffIcon };
+const RUNTIME_MODE: Record<PersonaKey, RuntimeMode> = {
   theo: { label: "Full access", description: "Allow commands and edits without prompts.", icon: ShieldOffIcon },
   julius: {
     label: "Auto-accept edits",
@@ -132,7 +134,7 @@ const RUNTIME_MODE: Record<PersonaKey, { label: string; description: string; ico
 
 /** The permissions chip, shown in the context strip like a new thread in T3 Code. */
 export function ComposerPermissionsChip({ persona }: { persona: PersonaKey }) {
-  const mode = RUNTIME_MODE[persona];
+  const mode = RUNTIME_MODE[persona] ?? FULL_ACCESS;
   return (
     <ComposerControl
       size="xs"

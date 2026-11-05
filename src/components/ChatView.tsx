@@ -2,7 +2,7 @@
 // WorkspaceBreadcrumb), timeline, and the composer overlay.
 import { PanelBottomIcon, PanelRightIcon, SquareMenuIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { PEOPLE } from "~/content/prompts";
+import { personOf } from "~/content/prompts";
 import { activeThread, computeStats, isWorking, type GameState } from "~/game/store";
 import { formatClock } from "~/lib/time";
 import { cn } from "~/lib/utils";
@@ -64,7 +64,7 @@ function LiveStats({ game }: { game: GameState }) {
 
 function ChatHeader({ game }: { game: GameState }) {
   const thread = activeThread(game);
-  const person = PEOPLE[thread.def.persona];
+  const person = personOf(thread.def.persona);
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
       <nav aria-label="Thread breadcrumb" className="min-w-0 flex-1 overflow-clip [overflow-clip-margin:2px]">

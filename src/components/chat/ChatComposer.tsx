@@ -4,7 +4,7 @@
 // player typed: correct characters in the text color, wrong ones in red.
 import { FolderIcon, GitBranchIcon, PaperclipIcon } from "lucide-react";
 import type { ComponentProps } from "react";
-import { PEOPLE, sourceAuthor, threadBranch, type PromptDef } from "~/content/prompts";
+import { personOf, sourceAuthor, threadBranch, type PromptDef } from "~/content/prompts";
 import { isWorking, nextPrompt, type GameState, type ThreadState } from "~/game/store";
 import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
@@ -90,7 +90,7 @@ function GhostEditor({ draft, target, locked }: { draft: string; target: string;
 }
 
 function PromptKindLabel({ thread, prompt }: { thread: ThreadState; prompt: PromptDef }) {
-  const person = PEOPLE[thread.def.persona];
+  const person = personOf(thread.def.persona);
   if (prompt.kind === "real") {
     const author = sourceAuthor(prompt) ?? person.handle;
     return (

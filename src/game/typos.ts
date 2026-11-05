@@ -241,7 +241,7 @@ export function buildReply(
     lines.push(`You didn't mention \`${word}\` this time, so I left it out.`);
   }
 
-  const signoff = SIGNOFF[persona];
+  const signoff = SIGNOFF[persona] ?? ["Done. Probably."];
   lines.push(signoff[seed % signoff.length]!);
 
   const outDiff: readonly [number, number] | null =

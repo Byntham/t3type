@@ -1,7 +1,7 @@
 // All game state lives here. Components read it with useGame() and call the
 // actions. Nothing talks to a server.
 import { useSyncExternalStore } from "react";
-import { THREADS, type PromptDef, type ThreadDef } from "~/content/prompts";
+import { drawThreads, type PromptDef, type ThreadDef } from "~/content/prompts";
 import { buildReply, diffPrompt, type AgentReply, type PromptDiff } from "./typos";
 
 export interface Turn {
@@ -64,13 +64,20 @@ const DRAFT_SLACK = 24;
 /** Real ms a finished thread stays in place before it settles, so the final reply can be read. */
 const SETTLE_DELAY_MS = 1800;
 
+/** ?seed=N picks the same threads every time, for tests. Otherwise each session draws fresh. */
+const seedParam = params.get("seed");
+let sessionSeed = seedParam !== null && seedParam !== "" ? Number(seedParam) : Math.floor(Math.random() * 1e9);
+/** ?core=N threads from each of the core three, ?guests=N threads from mutuals. */
+const PER_CORE = Math.max(1, Number(params.get("core") ?? 2) || 2);
+const GUESTS = Math.max(0, Number(params.get("guests") ?? 3));
+
 const realStart = Date.now();
 const clock = () => realStart + (Date.now() - realStart) * SPEED;
 
-function seededThreads(now: number): ThreadState[] {
+function seededThreads(now: number, defs: ThreadDef[]): ThreadState[] {
   // Spread past activity so the sidebar shows believable relative times.
   const ages = [12, 47, 95, 180, 300, 26 * 60, 50 * 60, 3 * 24 * 60, 6 * 24 * 60];
-  return THREADS.map((def, index) => ({
+  return defs.map((def, index) => ({
     def,
     turns: [],
     draft: "",
@@ -101,7 +108,8 @@ function freshSession(): Session {
 
 function initialState(): GameState {
   const now = clock();
-  return { threads: seededThreads(now), activeId: THREADS[0]!.id, session: freshSession(), now };
+  const defs = drawThreads(sessionSeed, PER_CORE, GUESTS);
+  return { threads: seededThreads(now, defs), activeId: defs[0]!.id, session: freshSession(), now };
 }
 
 let state: GameState = initialState();
@@ -397,8 +405,9 @@ export function nextWaitingThread() {
 }
 
 export function restart() {
-  const fresh = initialState();
-  set({ ...fresh, activeId: THREADS[0]!.id });
+  // A new session draws a new set of threads.
+  sessionSeed += 1;
+  set(initialState());
 }
 
 declare global {

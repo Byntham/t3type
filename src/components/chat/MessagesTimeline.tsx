@@ -14,7 +14,7 @@ import {
   TerminalIcon,
 } from "lucide-react";
 import { Fragment, type ReactNode, useState } from "react";
-import { PEOPLE, sourceAuthor, type ToolRow, type ToolType } from "~/content/prompts";
+import { personOf, sourceAuthor, type ToolRow, type ToolType } from "~/content/prompts";
 import type { ThreadState, Turn } from "~/game/store";
 import { formatDuration, formatTimeOfDay, formatWorkingDurationLabel } from "~/lib/time";
 import { cn } from "~/lib/utils";
@@ -83,7 +83,7 @@ function TypedWithTypos({ turn }: { turn: Turn }) {
 
 function PromptSource({ turn, thread }: { turn: Turn; thread: ThreadState }) {
   const prompt = turn.prompt;
-  const person = PEOPLE[thread.def.persona];
+  const person = personOf(thread.def.persona);
   if (prompt.kind === "parody") {
     return (
       <p className="me-1 text-2xs text-muted-foreground/70" data-prompt-kind="parody">
