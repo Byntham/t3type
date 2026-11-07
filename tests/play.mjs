@@ -280,7 +280,7 @@ async function checkWordsStayPutWhileTyping(browser) {
 async function checkWrongKeysShowExpectedText(browser) {
   const { page, errors } = await openPage(browser, "dark", "speed=4&seed=1");
   const text = activeOf(await state(page)).def.prompts[0].text;
-  const space = text.indexOf(" ");
+  const space = text.indexOf(" ", 3);
   const wrong = (ch) => (ch === "q" ? "z" : "q");
   const typed = text.slice(0, 2) + wrong(text[2]) + text.slice(3, space) + "x" + text.slice(space + 1, space + 4);
   await page.keyboard.type(typed);
