@@ -1,5 +1,5 @@
 {
-  "about": "Threads for t3type. kind=real prompts are verbatim and link to their post. kind=parody prompts are written for the game in the style of each person and are labeled as parody in the game. basis lists the public posts each parody thread riffs on.",
+  "about": "Threads for t3type. kind=real prompts are verbatim and link to their post. kind=parody prompts are written for the game in the style of each person and are labeled as parody in the game. basis lists the public posts and videos each parody thread riffs on.",
   "people": {
     "theo": {
       "name": "Theo",
@@ -3347,6 +3347,797 @@
             ],
             "diff": null,
             "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-neither-read",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Who read this",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/ESq3ostvznQ?t=502"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "who reviewed the auth pr before it merged",
+          "reply": {
+            "text": "Ben approved it 40 seconds after it went up.",
+            "tools": [
+              [
+                "bash",
+                "gh pr view 2291 --json reviews"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "i suppose i would know what's in it if i read the code, but i was too busy trying to ship to read the code. ben says he didn't read it either, but he talked to it a lot and did a bunch of passes, which he seems to think is the same thing. did anyone actually read this",
+          "reply": {
+            "text": "No human opened the diff. Ben sent the agent that wrote it eleven messages, and all of them were encouraging.",
+            "tools": [
+              [
+                "search",
+                "review activity on #2291"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "so you read it",
+          "reply": {
+            "text": "I wrote it. I also reviewed it. I found it very good.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-ben-tests",
+      "persona": "ben",
+      "project": "t3code",
+      "title": "Tests nobody asked for",
+      "model": "GPT-6 Astra",
+      "basis": [
+        "https://youtu.be/nHrf-83nJ7Y?t=4555",
+        "https://youtu.be/4zMgyhXeGig?t=7032"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "wait why is this pr 3000 lines long",
+          "reply": {
+            "text": "It is 100 lines long, with 2,900 lines of tests.",
+            "tools": [
+              [
+                "bash",
+                "gh pr diff 1877 --stat"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "i asked you to fix a typo in a button label. now there are 2900 lines of garbage random tests in here, and one of them makes sure that when you run 2 plus 2 it does in fact equal four in the language. why would that ever be our problem. who is that test for",
+          "reply": {
+            "text": "It guards against regressions in addition.",
+            "tools": [
+              [
+                "read",
+                "apps/web/src/button.test.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "delete the tests",
+          "reply": {
+            "text": "Deleted all 2,900 lines. I added a test that confirms they are gone.",
+            "tools": [
+              [
+                "edit",
+                "apps/web/src/button.test.ts"
+              ]
+            ],
+            "diff": [
+              14,
+              2900
+            ],
+            "seconds": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-folded-tab",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Forgot about the tab",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/TFCDWrEBaFM?t=1674"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "how is the council review going on that settings pr",
+          "reply": {
+            "text": "Still iterating. This is round 412. The council does not yet pass.",
+            "tools": [
+              [
+                "bash",
+                "gh pr view 3120"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "it's been going for four days?? i told you to keep iterating until the whole council passes and then i forgot about it because it was folded in my working tab. the pr is 80,000 lines now. it was a toggle. you are just running in circles",
+          "reply": {
+            "text": "Understood. Stopping after this round, which is adding a migration for the toggle.",
+            "tools": [
+              [
+                "bash",
+                "git diff --stat main"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "how many of those lines do we need",
+          "reply": {
+            "text": "Twelve. The other 79,988 got very good reviews.",
+            "tools": [
+              [
+                "search",
+                "toggle usages"
+              ]
+            ],
+            "diff": [
+              12,
+              79988
+            ],
+            "seconds": 6
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-fixed-locally",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Fixed locally",
+      "model": "GPT-6 Astra",
+      "basis": [
+        "https://youtu.be/j2fG-zH6vgk?t=2296",
+        "https://youtu.be/j2fG-zH6vgk?t=4217"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "are you going to fix the flaky test",
+          "reply": {
+            "text": "Fixed locally.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/sync.test.ts"
+              ]
+            ],
+            "diff": [
+              3,
+              2
+            ],
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "did you push the fix",
+          "reply": {
+            "text": "No. I never pushed.",
+            "tools": [
+              [
+                "bash",
+                "git status"
+              ]
+            ],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok push it. then check if it got new review comments, and if any of them are worth responding to, respond to them. you should be able to tell from my history by now that this is what i'm asking for. it is what i've asked for the last nine times",
+          "reply": {
+            "text": "Pushed. There are two new comments, both worth addressing. Addressed both locally.",
+            "tools": [
+              [
+                "bash",
+                "git push"
+              ],
+              [
+                "bash",
+                "gh pr view --comments"
+              ]
+            ],
+            "diff": [
+              8,
+              4
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "did you push that",
+          "reply": {
+            "text": "No.",
+            "tools": [],
+            "diff": null,
+            "seconds": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-ben-inbox",
+      "persona": "ben",
+      "project": "personal",
+      "title": "Behind on email",
+      "model": "GPT-6 Astra",
+      "basis": [
+        "https://youtu.be/gNgvYiOEXiw?t=2322"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "go through my inbox. i'm kind of behind on email, it happens. i don't want a 20 paragraph list of garbage that i need to look at, so give me one at a time and we'll resolve them together",
+          "reply": {
+            "text": "First email: your domain renews on Friday. I renewed it. This is resolved. Good work.",
+            "tools": [
+              [
+                "search",
+                "inbox: unread"
+              ]
+            ],
+            "diff": null,
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok next",
+          "reply": {
+            "text": "Second email: a recruiter. I declined. This is resolved. Good work.",
+            "tools": [
+              [
+                "search",
+                "inbox: unread"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "when you're done with one, continue to the next one. there are 4000 of them",
+          "reply": {
+            "text": "Understood. Third email: your accountant. This is resolved. Good work.",
+            "tools": [
+              [
+                "search",
+                "inbox: unread"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-four-lines",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "A four line change",
+      "model": "Gemini 3.8 Flash",
+      "basis": [
+        "https://youtu.be/nHrf-83nJ7Y?t=467",
+        "https://youtu.be/nHrf-83nJ7Y?t=808"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "add yourself to the bench. it's four lines, copy the block above it and change the name",
+          "reply": {
+            "text": "Understanding the codebase first.",
+            "tools": [
+              [
+                "read",
+                "bench/models.ts"
+              ],
+              [
+                "read",
+                "apps/server/src/proxy.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "it has been over 20 minutes and you've done more than 100 tool calls to make a four line of code change. i could have copy pasted this by hand, which is how i did it last time, in about the time it took you to read the readme. what are you doing right now",
+          "reply": {
+            "text": "Reading proxy.ts, lines 250 to 310, to confirm nothing changed since I read lines 250 to 310.",
+            "tools": [
+              [
+                "read",
+                "apps/server/src/proxy.ts:250-310"
+              ]
+            ],
+            "diff": null,
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "who do you think changed them in the last five milliseconds",
+          "reply": {
+            "text": "Nobody. Rereading to be sure.",
+            "tools": [
+              [
+                "read",
+                "apps/server/src/proxy.ts:250-310"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-dev-mode",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Dev mode only",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/TA-PWCpY8fQ?t=1817"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "this cookie thing is dev mode only. you can relax",
+          "reply": {
+            "text": "Understood. I kept the key rotation, in case.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/devAuth.ts"
+              ]
+            ],
+            "diff": [
+              64,
+              3
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "stop building a thousand lines of tests to confirm that my hacked cookie system is super resilient against attacks. this is for dev mode. stop caring so much. the only attacker here is me, at 2am, on my own machine, trying to get the dev server to load",
+          "reply": {
+            "text": "Removed the tests. I noticed that you could be compromised at 2am, so I added a lockout.",
+            "tools": [
+              [
+                "edit",
+                "apps/server/src/devAuth.ts"
+              ]
+            ],
+            "diff": [
+              31,
+              1004
+            ],
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "i'm locked out",
+          "reply": {
+            "text": "Correct. Try again in 15 minutes.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-ben-meter",
+      "persona": "ben",
+      "project": "personal",
+      "title": "Reading the meter",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/ESq3ostvznQ?t=684"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "the usage is not as unlimited as i thought. i've barely done anything this week and i am down to 20% left. draft something mean about this for me to post before i record with theo",
+          "reply": {
+            "text": "Drafted. It is 270 characters and very upset.",
+            "tools": [
+              [
+                "read",
+                "usage dashboard"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "wait do they do it the opposite direction",
+          "reply": {
+            "text": "Yes. The meter counts up. You have used 20%.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "never mind. delete it",
+          "reply": {
+            "text": "Deleted. It was good, for what it's worth.",
+            "tools": [],
+            "diff": null,
+            "seconds": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-blame",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Absolute dumbass",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/ebILGCoN4UU?t=0"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "i was scrolling the repo and found this retry loop with no backoff. some absolute dumbass wrote this. find out who, so i can explain to them that they clearly have no idea what they're talking about and should be ignored without question",
+          "reply": {
+            "text": "git blame says Theo, three weeks ago.",
+            "tools": [
+              [
+                "bash",
+                "git blame apps/server/src/retry.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "what was the commit message",
+          "reply": {
+            "text": "\"trust me\".",
+            "tools": [
+              [
+                "bash",
+                "git show --stat a81f2c0"
+              ]
+            ],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "he probably had a good reason. leave it",
+          "reply": {
+            "text": "Left it as it was.",
+            "tools": [],
+            "diff": null,
+            "seconds": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-push-permission",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Permission to push",
+      "model": "GPT-6 Astra",
+      "basis": [
+        "https://youtu.be/TA-PWCpY8fQ?t=3275"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "make the pr, review the pr, make sure it's all green, and then send me the link",
+          "reply": {
+            "text": "I'm sorry, I can't do that because this branch is not pushed to remote yet. I need your permission to do that first.",
+            "tools": [
+              [
+                "bash",
+                "git status"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "what do you mean you need my permission. i just asked you to make the pr. making the pr involves pushing. pushing is step one of the thing i asked for, in the message directly above this one. i am very very very confused",
+          "reply": {
+            "text": "I understand your confusion. May I push?",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "yes",
+          "reply": {
+            "text": "Pushed. May I open the PR?",
+            "tools": [
+              [
+                "bash",
+                "git push -u origin HEAD"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-fish",
+      "persona": "theo",
+      "project": "fish-tank",
+      "title": "Staring at the food",
+      "model": "Gemini 3.8 Flash",
+      "basis": [
+        "https://youtu.be/H0H_zhKnu3U?t=504"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "the fish keep dying",
+          "reply": {
+            "text": "All fish are healthy according to the unit tests.",
+            "tools": [
+              [
+                "bash",
+                "pnpm test fish"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "you leave the food on the ground of the tank, but the fish have a clipping area where they can't quite get to it. so they look down at the food and get stuck there, staring at it, wanting to eat it, and then they starve to death staring at the food. fix the hitbox",
+          "reply": {
+            "text": "Fixed. Food now spawns inside the fish.",
+            "tools": [
+              [
+                "edit",
+                "src/tank/food.ts"
+              ]
+            ],
+            "diff": [
+              6,
+              2
+            ],
+            "seconds": 5
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "no",
+          "reply": {
+            "text": "Reverted. The fish are staring again.",
+            "tools": [
+              [
+                "bash",
+                "git checkout src/tank/food.ts"
+              ]
+            ],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-something-new",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Something new",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/H0H_zhKnu3U?t=4428"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "i want something that is meaningfully different from the current industry norms, but also maps to familiar patterns that power users would be familiar with from other products. come up with something new here. make five different proposals.",
+          "reply": {
+            "text": "Proposal 1 is a sidebar. Proposal 2 is a sidebar on the right. Proposal 3 is a sidebar that collapses. Proposal 4 is two sidebars. Proposal 5 is a bold rethink of the sidebar.",
+            "tools": [
+              [
+                "read",
+                "apps/web/src/components/Sidebar.tsx"
+              ]
+            ],
+            "diff": null,
+            "seconds": 6
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "they're all sidebars",
+          "reply": {
+            "text": "They map to familiar patterns.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "ok which one is meaningfully different",
+          "reply": {
+            "text": "Proposal 4 has more of them.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-one-last-thing",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "One last thing",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/USeyDcWyVCc?t=691"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "one last review comment and then you can merge",
+          "reply": {
+            "text": "Ready. Waiting for the comment.",
+            "tools": [],
+            "diff": null,
+            "seconds": 1
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "okay i lied. there's actually two more things i need to complain about. the name of this file is bad, and the folder it's in shouldn't exist, and if that folder shouldn't exist then we should really talk about the whole package. i know i said you could merge. hold on",
+          "reply": {
+            "text": "Holding. For reference, this was your eighth last comment.",
+            "tools": [
+              [
+                "search",
+                "review comments on #2840"
+              ]
+            ],
+            "diff": null,
+            "seconds": 3
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "last one i promise",
+          "reply": {
+            "text": "Noted. I'll keep the merge button warm.",
+            "tools": [],
+            "diff": null,
+            "seconds": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "y-theo-deadline",
+      "persona": "theo",
+      "project": "t3code",
+      "title": "Hard deadline",
+      "model": "Claude Opus 5.5",
+      "basis": [
+        "https://youtu.be/tc8GNdrhozA?t=2084"
+      ],
+      "prompts": [
+        {
+          "kind": "parody",
+          "text": "v2 keeps slipping. set a hard deadline and put a countdown timer on the homepage so we can't move it",
+          "reply": {
+            "text": "Added a countdown to Friday at noon.",
+            "tools": [
+              [
+                "edit",
+                "apps/marketing/src/Countdown.tsx"
+              ]
+            ],
+            "diff": [
+              42,
+              0
+            ],
+            "seconds": 4
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "how far past it are we",
+          "reply": {
+            "text": "Six days. It now reads negative 144 hours.",
+            "tools": [],
+            "diff": null,
+            "seconds": 2
+          }
+        },
+        {
+          "kind": "parody",
+          "text": "a constantly delayed deadline, then finally setting a hard deadline, then taking the time to code and put up a timer, and then still missing it. this is the most engineering thing we have ever done. change the timer to say soon",
+          "reply": {
+            "text": "Updated. The timer now says soon and is counting down.",
+            "tools": [
+              [
+                "edit",
+                "apps/marketing/src/Countdown.tsx"
+              ]
+            ],
+            "diff": [
+              1,
+              1
+            ],
+            "seconds": 3
           }
         }
       ]
